@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motion Explainer Gallery</title>
+<meta name="description" content="Sets of '24 names' explainer videos made with Motion Explainer, by people in many fields and languages.">
+<style>
+  :root {
+    --bg: #F4F3F0; --ink: #1E1E21; --sub: #6E6E73; --line: #E3E1DC; --accent: #2F6BEB; --chip: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141416; --ink: #F2F2F4; --sub: #A1A1A8; --line: #2C2C31; --accent: #6E9BFF; --chip: #1E1E22; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 "Helvetica Neue", "Hiragino Sans", "Noto Sans", "Noto Sans CJK JP", system-ui, sans-serif; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 16px 56px; }
+  header h1 { margin: 0; font-size: 34px; letter-spacing: .01em; }
+  .catch { margin: 6px 0 0; font-size: 18px; font-weight: 600; }
+  .catch span { display: block; color: var(--sub); font-weight: 500; font-size: 16px; }
+  .lead { margin: 14px 0 0; color: var(--sub); max-width: 760px; }
+  a { color: var(--accent); }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 28px 0 18px; }
+  .filters label { font-size: 14px; color: var(--sub); }
+  select { font: inherit; font-size: 15px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--chip); color: var(--ink); }
+  .count { font-size: 14px; color: var(--sub); }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
+  @media (min-width: 760px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1140px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .item { min-width: 0; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; font-size: 13px; }
+  .tag { padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--chip); color: var(--sub); }
+  .item .twitter-tweet { margin: 0 !important; }
+  blockquote.twitter-tweet { border-left: 3px solid var(--line); margin: 0; padding: 8px 12px; color: var(--sub); }
+  footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--sub); font-size: 15px; }
+  footer p { margin: 6px 0; }
+  code { font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Motion Explainer</h1>
+    <p class="catch">Learn the shared language of AI. Become a creative director.<span>AIとの共通言語を覚えて、クリエイティブディレクターになろう。</span></p>
+    <p class="lead">Sets of "24 names" explainer videos, made with the Motion Explainer prompt by people in many fields and languages. Want to make one for your field? <a href="https://github.com/showheyohtaki/motion-explainer#readme">Read the README</a> (<a href="https://github.com/showheyohtaki/motion-explainer/blob/main/README.ja.md">日本語</a>).</p>
+  </header>
+
+  <div class="filters">
+    <label for="f-field">Field</label>
+    <select id="f-field"><option value="">All</option></select>
+    <label for="f-lang">Language</label>
+    <select id="f-lang"><option value="">All</option></select>
+    <span class="count" id="count"></span>
+  </div>
+
+  <main class="grid" id="grid"></main>
+
+  <footer>
+    <p>Post your set with <strong>#MotionExplainer</strong> and it will be added here. You can also add it yourself: a pull request with one line in <a href="https://github.com/showheyohtaki/motion-explainer/blob/main/docs/posts.json"><code>docs/posts.json</code></a>.</p>
+    <p><strong>#MotionExplainer</strong> を付けて投稿すると、ここに追加されます。<a href="https://github.com/showheyohtaki/motion-explainer/blob/main/docs/posts.json"><code>docs/posts.json</code></a> に1行足すプルリクエストでも構いません。</p>
+  </footer>
+</div>
+
+<script>
+// Each entry in posts.json: { "url": "https://x.com/<user>/status/<id>", "field": "...", "language": "ja", "author": "<user>" }
+const LANG_NAMES = { en: 'English', ja: '日本語', zh: '中文', ko: '한국어', es: 'Español', fr: 'Français', de: 'Deutsch', pt: 'Português', it: 'Italiano' };
+const grid = document.getElementById('grid'), fField = document.getElementById('f-field'), fLang = document.getElementById('f-lang'), count = document.getElementById('count');
+let posts = [];
+
+function langName(code) { return LANG_NAMES[code] || code; }
+function el(tag, attrs = {}, text) { const e = document.createElement(tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); if (text) e.textContent = text; return e; }
+
+function card(p) {
+  const item = el('article', { class: 'item' });
+  const meta = el('div', { class: 'meta' });
+  meta.append(el('span', { class: 'tag' }, p.field), el('span', { class: 'tag' }, langName(p.language)));
+  item.append(meta);
+  // official embed markup; widgets.js turns it into the full post with its videos
+  const bq = el('blockquote', { class: 'twitter-tweet', 'data-dnt': 'true', 'data-conversation': 'none', 'data-lang': p.language === 'ja' ? 'ja' : 'en' });
+  const pEl = el('p', {}, `${p.field} — @${p.author}`);
+  const a = el('a', { href: p.url.replace('https://x.com/', 'https://twitter.com/') }, p.url);
+  bq.append(pEl, a);
+  if (matchMedia('(prefers-color-scheme: dark)').matches) bq.setAttribute('data-theme', 'dark');
+  item.append(bq);
+  return item;
+}
+
+function render() {
+  const f = fField.value, l = fLang.value;
+  const shown = posts.filter((p) => (!f || p.field === f) && (!l || p.language === l));
+  grid.replaceChildren(...shown.map(card));
+  count.textContent = `${shown.length} / ${posts.length}`;
+  if (window.twttr && twttr.widgets) twttr.widgets.load(grid);
+}
+
+function fillSelect(sel, values, label = (v) => v) {
+  [...new Set(values)].sort().forEach((v) => sel.append(el('option', { value: v }, label(v))));
+}
+
+fetch('posts.json').then((r) => r.json()).then((data) => {
+  posts = data;
+  fillSelect(fField, posts.map((p) => p.field));
+  fillSelect(fLang, posts.map((p) => p.language), langName);
+  render();
+  const s = document.createElement('script');
+  s.src = 'https://platform.twitter.com/widgets.js'; s.async = true; s.charset = 'utf-8';
+  document.body.append(s);
+}).catch(() => { grid.textContent = 'Could not load posts.json.'; });
+
+fField.addEventListener('change', render);
+fLang.addEventListener('change', render);
+</script>
+</body>
+</html>

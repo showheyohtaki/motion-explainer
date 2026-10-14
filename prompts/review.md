@@ -38,7 +38,8 @@ Three videos (9.4 s each, 8 animated cards per video, 1200x1350) and one cheat-s
    size)? Loop seam: compare the last and first frames. Flashing: measure the mean brightness
    of each card area per frame; three or more light/dark reversals within one second is a fail
    (small moving edges do not count; a large area changing does).
-5. Look. Is color used only on the subject? People drawn without faces? Any card that looks
+5. Look. Is color used only on the subject? Are faces left out where they
+   would only distract (keep them only if the field needs them)? Any card that looks
    like a dull diagram rather than real work?
 6. Post text. Overclaiming ("always", "perfect", guarantees), stiff or machine-like wording,
    and any number or achievement without a source (that is a HOLD).

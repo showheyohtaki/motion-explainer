@@ -32,7 +32,7 @@ Before you start, read: `README.md`, `render.mjs`, `check.mjs`, `template/index.
 
 **Language.** Make the set in the language the user writes to you in, which is usually their native language: names, group titles, descriptions, cheat sheet and post text. Only if you cannot tell (for example, the English request above was pasted unchanged), ask once before Stage 1 which language to make it in. Do not make an English version unless the user asks for it.
 
-If the user did not give the field or the audience, ask before Stage 1. Everything you put on screen is in the set's language, plus the second line.
+If the user did not give the field or the audience, ask before Stage 1. If the request only says where the set will be used (for example "for my course" or "for X"), that is not the audience: ask who will watch it, and do not guess. Everything you put on screen is in the set's language, plus the second line.
 
 ### Stage 1 — Choose the 24 names (STOP at the end)
 
@@ -83,7 +83,7 @@ Ask the user to correct the list. Revise and show it again until they say OK.
 
 - **Keep everything that is not the subject simple.** Neutral background, plain props. Use color only on the subject the name is about. Color on the background or on the people made the subject hard to find.
 - **When the subject is the movement itself, color the moving thing.** A colorful subject on a calm stage makes the motion easy to follow.
-- **People are pictograms with a plain round head.** No eyes, mouth or hair. Faces distracted viewers and looked odd.
+- **People (a suggestion, not a rule).** The author's examples draw people as pictograms with a plain round head, no eyes, mouth or hair; faces distracted viewers there. If you want the same feel as the examples, do the same. If your field needs the shape of a face (for example, lighting: the shadow of the nose or the triangle of light on a cheek), draw what you need to show, such as a head with the forms of a plaster bust but no eyes, mouth or hair.
 - **Show the real thing, not a diagram.** A simple drawing is fine, but it should show the actual object or scene from the field (a cup, a chart, a room, a product, a stage), not abstract dots and arrows explaining it. A dull, diagram-like card is a failed card even if it is correct.
 - **Look-alike pairs share the same scene, side by side,** so the only thing that changes is the difference itself.
 - **If motion alone cannot explain it, change the way you show it.** Options that worked: a two-stage card (a big clean sample for about 3 seconds, then a small scene of it in real use for about 6 seconds, with a tiny "sample / in use" tag); a second track (for audio that starts before the picture, a small video bar and audio bar); a side-by-side comparison (constant speed vs eased); a small readout (24mm → 87mm). Do not rely on small readouts alone: text below about 20px cannot be read on a phone.
@@ -124,7 +124,7 @@ This writes, for each page, the mp4, one contact sheet of the whole page (`-shee
 3. Could it be confused with its neighbor or another card?
 4. Does the key moment show up in the stills, and is the result held long enough to read?
 5. Text: cut off, overlapping, too small for a phone?
-6. Faces or hair on people? Color on things that are not the subject?
+6. Are people drawn the way you decided in Stage 2 (for example, no faces)? Color on things that are not the subject?
 
 Then use the whole-page sheets for what only they show: the order of the cards, whether neighbors are easy to tell apart, and whether the key moments of the eight cards happen at different times.
 

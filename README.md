@@ -15,6 +15,8 @@ Give this repository to a coding AI (Claude Code, Codex, Cursor, and so on), tel
 
 *Two sets made this way. They look different on purpose: the look comes from the field, not from a template.*
 
+**Gallery:** sets people have posted, all in one page → https://showheyohtaki.github.io/motion-explainer/
+
 ## Why I made this
 
 These videos got a lot of comments.
