@@ -77,27 +77,10 @@ Ask the user to correct the list. Revise and show it again until they say OK.
 - Each card plays a 4.7-second cycle twice per video.
 - Under each card: number + name (about 36px, bold), second line below (about 22px). Heading at the top left: series title, page number (1/3), group title. Page dots at the bottom so viewers know there are three videos.
 
-**The look.** If the user says nothing about the look, make it look like `examples/camera-moves`. Work from the example itself, not from a description:
+**The look.** Look at the example videos and `index.html` files in `examples/` and make yours in the same style. If the user says nothing about the look, match `examples/camera-moves`; if they say "colorful", match `examples/motion-graphics`. If they ask for anything else about the look, change only what they asked for.
 
-1. **See it.** Render stills of the example and look at them: `node render.mjs examples/camera-moves/ja/index.html --page 1 --sheet --cards --out-dir out/reference` (or open the HTML with `?t=2`).
-2. **Copy the parts.** In that `index.html`, read the drawing code (the color list `C`, `person()`, the ground, buildings, trees, mountains and sky) and copy these parts into your file (they draw in meters with y up, for a 3D camera; on a flat card, place them with `k.translate(x, groundY); k.scale(px, -px)`). Draw anything new in the same style as those parts. Changes in the subject (light, shadow, state) are shown with shades of blue.
-3. **Glance once.** When page 1 is rendered, put one still next to one example still and check that it feels like the same series.
+**Tips for showing the names** (they come from fixing real versions of this series):
 
-**If the user says anything about the look, layer it on top of `examples/camera-moves`.** Change only what they asked for, and keep the skeleton: the 2x4 cards, the number / name / English name labels, simple flat shapes, and a way of showing that makes the subject clear. The user's words win over the color rules below. Examples:
-
-- "use a bit more color" → keep the blue and add 2 or 3 colors for the subjects and accents
-- "colorful" → use `examples/motion-graphics` as the example (same steps 1 to 3 with that one)
-- "in our brand color #xxxxxx" → replace the blue with that color
-- "dark background", "hand-drawn feel" → change only the background or the lines
-
-In this stage, ask once: "Keep the look of the examples? If you want to change something, one line is enough (for example: a bit more color / colorful / in our brand color)." Do not ask if the first request already said something about the look.
-
-**Rules for the look** (they come from fixing real versions of this series):
-
-- **Keep everything that is not the subject simple.** Neutral background, plain props. Use color only on the subject the name is about. Color on the background or on the people made the subject hard to find.
-- **When the subject is the movement itself, color the moving thing.** A colored subject on a calm stage makes the motion easy to follow. Within the default look, use the blue for this; a fully colorful look like `examples/motion-graphics` is a change of look, so ask the user first.
-- **People are the example's pictograms** (`person()`): plain round head, no eyes, mouth or hair. When a name needs the shape of a face, add one minimal shape (such as a nose) and draw light and shadow as flat shapes. Never a realistic face or a plaster bust: they look eerie.
-- **Keep the tone friendly.** Nothing should look creepy or scary, unless the names themselves are for horror (for example, styles for horror videos).
 - **Show the real thing, not a diagram.** A simple drawing is fine, but it should show the actual object or scene from the field (a cup, a chart, a room, a product, a stage), not abstract dots and arrows explaining it. A dull, diagram-like card is a failed card even if it is correct.
 - **Look-alike pairs share the same scene, side by side,** so the only thing that changes is the difference itself.
 - **If motion alone cannot explain it, change the way you show it.** Options that worked: a two-stage card (a big clean sample for about 3 seconds, then a small scene of it in real use for about 6 seconds, with a tiny "sample / in use" tag); a second track (for audio that starts before the picture, a small video bar and audio bar); a side-by-side comparison (constant speed vs eased); a small readout (24mm → 87mm). Do not rely on small readouts alone: text below about 20px cannot be read on a phone.
