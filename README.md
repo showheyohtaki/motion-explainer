@@ -1,6 +1,6 @@
 # Motion Explainer
 
-**Learn the shared language of AI. Become a creative director.**
+**Teach the words of your craft. Make the world more creative.**
 
 **English** | [日本語](README.ja.md)
 
@@ -21,9 +21,9 @@ These videos got a lot of comments.
 
 I read through them, and one stopped me. Someone wrote, more or less, that what had been holding them back was never a lack of imagination. They just didn't know what that kind of movement was called.
 
-I knew exactly what they meant. The picture is already in your head. What's missing isn't talent or imagination. It's the name: the word you can hand to your AI.
+I knew exactly what they meant. The picture is already in your head. What's missing isn't talent or imagination. It's the word you can hand to your AI.
 
-Names are the shared language of a field. Camera work has them. So do motion graphics, cooking, lighting, and every craft I can think of. If professionals from all kinds of fields, in all kinds of languages, showed us the names that matter most in their work, that would be incredibly useful.
+Every field has its own vocabulary, its shared language. Camera work has one. So do motion graphics, cooking, lighting, and every craft I can think of. If professionals from all kinds of fields, in all kinds of languages, taught us the terms that matter most in their work, that would be incredibly useful.
 
 So I'm sharing the prompt that makes these videos.
 
@@ -31,7 +31,11 @@ Another comment said: "this is how you become a creative director".
 
 Exactly.
 
-It would be wonderful to see more creative directors around the world doing great work together with AI.
+I believe that knowing the vocabulary of many different fields will let a lot more people bring out creative talent that has been sleeping in them.
+
+So I hope this repository helps more people become teachers, explaining their own field in a way anyone can follow.
+
+And beyond that, it would be wonderful to see more creative directors around the world doing great work together with AI.
 
 — Shohei Ohtaki ([@showheyohtaki](https://x.com/showheyohtaki))
 
