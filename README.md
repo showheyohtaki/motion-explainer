@@ -13,7 +13,7 @@ Give this repository to a coding AI (Claude Code, Codex, Cursor, and so on), tel
 
 ## Why I made this
 
-Over the past few days, I've received all kinds of comments.
+The videos in this series that I've posted on X have received all kinds of comments.
 
 Among them, one from someone who had seen my posts caught my eye:
 
@@ -23,15 +23,11 @@ When I read that, I thought, strongly: "Yes, that's exactly it."
 
 The picture is already there in your head, and so is the sense of "I want it to move like this." What's missing isn't talent or imagination. I think it's a "shared language" for handing that image over to AI.
 
-If experts in all kinds of fields, in all kinds of languages, laid out as a library the terms they'd want everyone to share, at a minimum, to really get the most out of AI, it would be enormously useful.
+That's why I think it would help so many people if experts in every field posted explainers of the "terms of the trade" you need to really work with AI. With that in mind, I've shared how to make them.
 
-So I thought I'd start with myself, and put this together on GitHub for everyone.
+I hope this repository helps many "teachers" emerge, and that thanks to them, more creative directors do wonderful work together with AI. That would be wonderful.
 
-"this is how you become a creative director"
-
-I got that comment too, and I think it's exactly right. The ability to put the picture inside you into words, and hand it to people and to AI, is probably the very core of creative direction.
-
-If this repository is where it starts, and more and more creative directors around the world do wonderful work together with AI, nothing would make me happier.
+If you make one, post it with #MotionExplainer. I'll come and see it.
 
 — Shohei Ohtaki ([@showheyohtaki](https://x.com/showheyohtaki))
 

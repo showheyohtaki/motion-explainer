@@ -13,7 +13,7 @@ Dale este repositorio a una IA de programación (Claude Code, Codex, Cursor, etc
 
 ## Por qué lo hice
 
-Estos últimos días he recibido todo tipo de comentarios.
+Los videos de esta serie que he publicado en X han recibido todo tipo de comentarios.
 
 Entre ellos, una persona que había visto mis publicaciones escribió algo que me llamó la atención:
 
@@ -23,15 +23,11 @@ Cuando lo leí, pensé con fuerza: "Sí, es justo eso".
 
 En tu cabeza ya tienes la imagen, e incluso la idea de "quiero que se mueva así". Lo que falta no es talento ni imaginación; creo que es un "lenguaje común" para pasarle esa imagen a la IA.
 
-Si expertos de todo tipo de campos, en todo tipo de idiomas, mostraran como una biblioteca los términos que, como mínimo, querrían que todos compartiéramos para sacarle de verdad partido a la IA, sería increíblemente útil.
+Por eso creo que, si expertos de cada campo publicaran explicaciones de los "términos del oficio" que hacen falta para trabajar de verdad con la IA, ayudarían a muchísima gente. Con esa idea, he compartido cómo hacerlas.
 
-Así que pensé: ¿por qué no empezar por mí mismo? Y reuní todo esto en GitHub para compartirlo.
+Ojalá de este repositorio surjan muchos "maestros" y, gracias a ellos, haya más directores creativos que desplieguen un gran talento junto con la IA. Sería maravilloso.
 
-"this is how you become a creative director" ("así es como te conviertes en director creativo")
-
-También recibí ese comentario, y creo que tiene toda la razón. La capacidad de poner en palabras la imagen que llevas dentro y pasársela a las personas y a la IA es, seguramente, el núcleo de la dirección creativa.
-
-Si a partir de este repositorio surgen en todo el mundo cada vez más directores creativos que despliegan un gran talento junto con la IA, no podría estar más feliz.
+Si haces una, publícala con #MotionExplainer. Pasaré a verla.
 
 — Shohei Ohtaki ([@showheyohtaki](https://x.com/showheyohtaki))
 
