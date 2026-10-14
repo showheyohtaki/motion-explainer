@@ -49,6 +49,8 @@ Si a partir de este repositorio surgen en todo el mundo cada vez más directores
    Para quién es: <p. ej. "gente que pide fotos de producto a modelos de imagen con IA">
    ```
    PROMPT.md está en inglés, pero la colección se hace en el idioma en el que le hables a la IA: los nombres que de verdad se usan en tu campo en ese idioma, las etiquetas, la guía rápida y el texto de la publicación. Si ese idioma no es el inglés, cada nombre lleva además su nombre en inglés debajo, para que cualquiera sepa qué escribirle a una IA. Una versión en inglés o en otro idioma es opcional; la IA te lo pregunta una sola vez al final.
+
+   **El estilo:** si no dices nada, sale con el estilo de los ejemplos. Añade unas palabras y las seguirá, por ejemplo "hazlo colorido" o "usa nuestro color de marca #1A73E8".
 3. Trabaja con ella. Se detiene dos veces para que lo apruebes: cuando la **lista de 24 nombres** está lista y cuando se decide el **estilo** de las tarjetas. Tu experiencia cuenta sobre todo en la primera parada. Después construye, renderiza y revisa los videos, y te ayuda con la imagen de la guía rápida, una revisión independiente y el texto de la publicación.
 
 ## Qué hay aquí

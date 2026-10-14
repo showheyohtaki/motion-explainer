@@ -38,11 +38,10 @@ Three videos (9.4 s each, 8 animated cards per video, 1200x1350) and one cheat-s
    size)? Loop seam: compare the last and first frames. Flashing: measure the mean brightness
    of each card area per frame; three or more light/dark reversals within one second is a fail
    (small moving edges do not count; a large area changing does).
-5. Look. Put stills of the set next to stills of the example whose look was chosen (by default
-   examples/camera-moves: render it with render.mjs --sheet, or take frames from its mp4).
-   Do they look like the same series (colors, people, background, line widths)? Is color used
-   only on the subject? Does anything look eerie or scary (unless the names are for horror)?
-   Any card that looks
+5. Look. Glance at one still next to the example it is based on (by default
+   examples/camera-moves, plus any look changes the user asked for). Does it feel like the same
+   series? Is the subject easy to find? Does anything look eerie or scary (unless the names are
+   for horror)? Any card that looks
    like a dull diagram rather than real work?
 6. Post text. Overclaiming ("always", "perfect", guarantees), stiff or machine-like wording,
    and any number or achievement without a source (that is a HOLD).

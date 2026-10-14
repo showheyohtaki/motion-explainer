@@ -77,15 +77,20 @@ Ask the user to correct the list. Revise and show it again until they say OK.
 - Each card plays a 4.7-second cycle twice per video.
 - Under each card: number + name (about 36px, bold), second line below (about 22px). Heading at the top left: series title, page number (1/3), group title. Page dots at the bottom so viewers know there are three videos.
 
-**Default look: `examples/camera-moves`.** Do not work from a description of it. Look at the example and match it:
+**The look.** If the user says nothing about the look, make it look like `examples/camera-moves`. Work from the example itself, not from a description:
 
 1. **See it.** Render stills of the example and look at them: `node render.mjs examples/camera-moves/ja/index.html --page 1 --sheet --cards --out-dir out/reference` (or open the HTML with `?t=2`).
-2. **Read it and copy the parts.** In that `index.html`, read the drawing code: the color list `C`, `person()`, and how the ground, buildings, trees, mountains and sky are drawn. Copy these parts into your file and use them (they draw in meters with y up, for a 3D camera; on a flat card, place them with `k.translate(x, groundY); k.scale(px, -px)`). Draw anything new the same way: flat fills, no outlines, blue and grays.
-3. **Compare.** When your cards are rendered, put them next to the example stills and fix any difference in colors, the shape of the people, the brightness of the background and the line widths.
+2. **Copy the parts.** In that `index.html`, read the drawing code (the color list `C`, `person()`, the ground, buildings, trees, mountains and sky) and copy these parts into your file (they draw in meters with y up, for a 3D camera; on a flat card, place them with `k.translate(x, groundY); k.scale(px, -px)`). Draw anything new the same way: flat fills, no outlines, blue and grays. Changes in the subject (light, shadow, state) are shown with shades of blue.
+3. **Glance once.** When page 1 is rendered, put one still next to one example still and check that it feels like the same series.
 
-Changes in the subject (light, shadow, state) are shown with shades of blue, as in the example.
+**If the user says anything about the look, layer it on top of `examples/camera-moves`.** Change only what they asked for, and keep the skeleton: the 2x4 cards, the number / name / English name labels, simple flat shapes, and a way of showing that makes the subject clear. The user's words win over the color rules below. Examples:
 
-**The user may change the look** in this stage: other colors, line drawings, an interface mock-up, the colorful style of `examples/motion-graphics`. Offer it as a question ("Keep the default look, or change it?"); do not change it on your own. If the user picks another example's look, follow the same three steps with that example.
+- "use a bit more color" → keep the blue and add 2 or 3 colors for the subjects and accents
+- "colorful" → use `examples/motion-graphics` as the example (same steps 1 to 3 with that one)
+- "in our brand color #xxxxxx" → replace the blue with that color
+- "dark background", "hand-drawn feel" → change only the background or the lines
+
+In this stage, ask once: "Keep the look of the examples? If you want to change something, one line is enough (for example: a bit more color / colorful / in our brand color)." Do not ask if the first request already said something about the look.
 
 **Rules for the look** (they come from fixing real versions of this series):
 
@@ -133,7 +138,7 @@ This writes, for each page, the mp4, one contact sheet of the whole page (`-shee
 3. Could it be confused with its neighbor or another card?
 4. Does the key moment show up in the stills, and is the result held long enough to read?
 5. Text: cut off, overlapping, too small for a phone?
-6. Put the card image next to the example stills (`out/reference`): does it look like the same series (colors, people, background, line widths)? Does anything look eerie or scary? Color on things that are not the subject?
+6. Does it still feel like the same series as the example (with the user's look changes, if any)? Does anything look eerie or scary?
 
 Then use the whole-page sheets for what only they show: the order of the cards, whether neighbors are easy to tell apart, and whether the key moments of the eight cards happen at different times.
 

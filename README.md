@@ -49,6 +49,8 @@ If this repository is where it starts, and more and more creative directors arou
    Who it is for: <e.g. "people who ask AI image models for product photos">
    ```
    The set is made in the language you write in: the names your field uses in that language, the labels, the cheat sheet and the post. If that language is not English, every name also carries its English name underneath, so anyone can see what to type into an AI. A version in English or another language is optional; the AI asks once at the end.
+
+   **The look:** say nothing and you get the look of the examples. Add a few words and it follows them, for example "make it colorful" or "use our brand color #1A73E8".
 3. Work with it. It stops twice for you: when the **list of 24 names** is ready, and when the **look** of the cards is decided. Your expertise matters most at the first stop. Then it builds, renders and checks the videos, and helps you with the cheat-sheet image, an independent review and the post text.
 
 ## What is in here
