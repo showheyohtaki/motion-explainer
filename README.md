@@ -9,7 +9,7 @@ Give this repository to a coding AI (Claude Code, Codex, Cursor, and so on), tel
 
 ![Two example sets: camera moves (left) and motion graphics (right)](assets/preview.gif)
 
-*Two sets made this way. They look different on purpose: the look comes from the field, not from a template.*
+*Two sets made this way. The camera set's look is the default; change it freely when your field needs another look (the motion graphics set is one example).*
 
 ## Why I made this
 

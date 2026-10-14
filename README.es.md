@@ -9,7 +9,7 @@ Dale este repositorio a una IA de programación (Claude Code, Codex, Cursor, etc
 
 ![Dos ejemplos: movimientos de cámara (izquierda) y motion graphics (derecha)](assets/preview.gif)
 
-*Dos colecciones hechas así. Se ven distintas a propósito: el estilo sale del campo, no de una plantilla.*
+*Dos colecciones hechas así. El estilo de la de cámara es el predeterminado; si tu campo pide otro, cámbialo con total libertad (la de motion graphics es un ejemplo).*
 
 ## Por qué lo hice
 
