@@ -1,0 +1,593 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Camera Work Cheat Sheet (EN)</title>
+<style>html,body{margin:0;background:#F4F3F0}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script>
+// Name cheat sheet video: 24 cards = 3 pages x 8 cards (1200x1350, 30fps, 9.4s per page, seamless loop).
+// Every frame is a pure function of the frame number, so it can be captured one frame at a time.
+//   window.N_FRAMES      number of frames in one page (282)
+//   window.renderFrame(i) draws frame i on the canvas
+//   window.READY          true once fonts are loaded
+// URL: ?page=1|2|3 picks the page, ?t=seconds shows a still, ?render=1 turns off the preview loop (used by render.mjs).
+// Open this file in a browser to preview the loop.
+
+// ============================== CONFIG ==============================
+const W = 1200, H = 1350, FPS = 30;
+const HOLD = 9.4;   // seconds per page
+const CYC = HOLD / 2;                                                      // each card plays twice per page
+const C = {
+  bg: '#F4F3F0', card: '#FFFFFF', border: '#E3E1DC', ink: '#1E1E21', sub: '#8E8E93', faint: '#C9C9CC',
+  blue: '#2F6BEB', blueM: '#9DB8F6', blueL: '#C9D8FB', blueXL: '#E4ECFE', blueBg: '#F1F5FF',
+  grid: '#ECECEC', g1: '#F1F0EE', g2: '#E2E1DE', g3: '#CFCECB', g4: '#A9A8A5'
+};
+const JP = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif';
+const EN = '"Helvetica Neue", "SF Pro Display", system-ui, sans-serif';
+const MONO = '"SF Mono", ui-monospace, Menlo, monospace';
+
+const PAGES = [
+  { no: '1/3', title: 'Camera Movement', note: 'How the camera itself moves' },
+  { no: '2/3', title: 'Shooting Style & Time', note: 'How you shoot and play with time' },
+  { no: '3/3', title: 'Transitions', note: 'How one shot leads to the next' },
+];
+const ITEMS = [   // [number, name, one-line description]
+  ['01', 'Pan', 'Pivot the camera left or right'], ['02', 'Tilt', 'Pivot the camera up or down'],
+  ['03', 'Dolly in', 'Move the camera toward the subject'], ['04', 'Zoom in', 'Magnify with the lens (camera stays put)'],
+  ['05', 'Tracking shot', 'Move along with the subject'], ['06', 'Orbit (Arc shot)', 'Circle around the subject'],
+  ['07', 'Crane up', 'Lift the camera up'], ['08', 'Dolly zoom (Vertigo)', 'Subject stays, background warps'],
+  ['09', 'Rack focus', 'Shift focus from near to far'], ['10', 'Handheld', 'Add a slight, deliberate shake'],
+  ['11', 'FPV drone shot', 'Fast, immersive fly-through'], ['12', 'Dutch angle', 'Tilt the frame diagonally'],
+  ['13', 'Slow motion', 'Play the action slower'], ['14', 'Speed ramp', 'Change speed mid-shot'],
+  ['15', 'Time-lapse', 'Compress hours into seconds'], ['16', 'Freeze frame', 'Pause the action for a beat'],
+  ['17', 'Jump cut', 'Same framing, skip ahead in time'], ['18', 'Match cut', 'Cut on a matching shape or motion'],
+  ['19', 'Whip pan', 'Fast pan blur into the next shot'], ['20', 'Cross dissolve', 'Blend one shot into the next'],
+  ['21', 'Wipe', 'A moving edge replaces the shot'], ['22', 'Smash cut', 'Abrupt cut to a contrasting scene'],
+  ['23', 'J-cut', "Next scene's audio starts first"], ['24', 'L-cut', "Previous scene's audio carries over"],
+];
+
+// layout
+const MX = 44, GAP = 34, CW = (W - MX * 2 - GAP) / 2, CH = 208, ROW0 = 104, PITCH = 300;
+
+// ============================== UTIL ==============================
+// one video = one page (9.4s). Pick it with ?page=1|2|3 or DEFAULT_PAGE
+const DEFAULT_PAGE = 1;
+const PAGE_ONLY = (+(new URLSearchParams(location.search).get('page')) || DEFAULT_PAGE) - 1;
+window.N_FRAMES = Math.round(HOLD * FPS);
+const cv = document.getElementById('c'); cv.width = W; cv.height = H; const cx = cv.getContext('2d');
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, x) => a + (b - a) * x;
+const P = (t, a, b) => clamp((t - a) / (b - a));
+const eIO = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eIOs = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+const eOut = x => 1 - Math.pow(1 - x, 3);
+const mod = (a, n) => ((a % n) + n) % n;
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function txt(ctx, s, x, y, font, col, align = 'left', base = 'alphabetic', ls = '0px') {
+  ctx.font = font; ctx.fillStyle = col; ctx.textAlign = align; ctx.textBaseline = base; ctx.letterSpacing = ls; ctx.fillText(s, x, y); ctx.letterSpacing = '0px';
+}
+function tw(ctx, s, font, ls = '0px') { ctx.font = font; ctx.letterSpacing = ls; const w = ctx.measureText(s).width; ctx.letterSpacing = '0px'; return w; }
+
+// ============================== 3D SCENE ==============================
+// World coordinates: Y up, camera looks toward +Z (yaw=0). Units are meters. Focal length f is in pixels.
+const F0 = 330;  // = shown as 24mm
+const mm = f => Math.round(f / F0 * 24) + 'mm';
+function cam(o) { return Object.assign({ x: 0, y: 1.5, z: 0, yaw: 0, pitch: 0, roll: 0, f: F0 }, o); }
+function proj(c, X, Y, Z) {
+  const dx = X - c.x, dy = Y - c.y, dz = Z - c.z;
+  const cy = Math.cos(c.yaw), sy = Math.sin(c.yaw);
+  const x1 = dx * cy - dz * sy, z1 = dx * sy + dz * cy;
+  const cp = Math.cos(c.pitch), sp = Math.sin(c.pitch);
+  const y2 = dy * cp - z1 * sp, z2 = dy * sp + z1 * cp;
+  return { x: c.f * x1 / z2, y: -c.f * y2 / z2, z: z2, s: c.f / z2, cx: x1, cy: y2 };
+}
+function camZ(c, X, Y, Z) { return proj(c, X, Y, Z).z; }
+const NEAR = 0.25;
+function seg(ctx, c, a, b) {   // 3D line with near clipping
+  let za = camZ(c, ...a), zb = camZ(c, ...b);
+  if (za < NEAR && zb < NEAR) return;
+  if (za < NEAR) { const t = (NEAR - za) / (zb - za); a = a.map((v, i) => lerp(v, b[i], t)); }
+  else if (zb < NEAR) { const t = (NEAR - zb) / (za - zb); b = b.map((v, i) => lerp(v, a[i], t)); }
+  const p = proj(c, ...a), q = proj(c, ...b);
+  ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+}
+function poly(ctx, c, pts) { ctx.beginPath(); pts.forEach((p, i) => { const q = proj(c, ...p); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); }); ctx.closePath(); }
+
+// sprite = local drawing (meters, y up) anchored at a world point, always facing camera (billboard)
+function sprite(ctx, c, X, Y, Z, fn) {
+  const p = proj(c, X, Y, Z); if (p.z < NEAR) return;
+  ctx.save(); ctx.translate(p.x, p.y); ctx.scale(p.s, -p.s); fn(ctx, p.s); ctx.restore();
+}
+function person(ctx, s, o = {}) {
+  const col = o.col || C.blue, walk = o.walk || 0, face = o.face;
+  ctx.fillStyle = col;
+  const sw = Math.sin(walk) * 0.42;
+  // legs
+  [[-0.08, sw], [0.08, -sw]].forEach(([x, a]) => { ctx.save(); ctx.translate(x, 0.86); ctx.rotate(a); rr(ctx, -0.075, -0.86, 0.15, 0.88, 0.07); ctx.fill(); ctx.restore(); });
+  // arms
+  [[-0.25, -sw], [0.25, sw]].forEach(([x, a]) => { ctx.save(); ctx.translate(x, 1.38); ctx.rotate(a * (o.armUp ? 0 : 1) + (o.armUp ? (x < 0 ? -2.6 : 2.6) : 0)); rr(ctx, -0.06, -0.58, 0.12, 0.6, 0.06); ctx.fill(); ctx.restore(); });
+  rr(ctx, -0.23, 0.82, 0.46, 0.64, 0.12); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 1.63, 0.16, 0, 7); ctx.fill();
+  if (face !== undefined && Math.cos(face) > 0) {   // facing direction (for the orbit)
+    ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(Math.sin(face) * -0.09, 1.65, 0.035, 0, 7); ctx.fill();
+  }
+}
+function tree(ctx, s, h = 4, col = C.g2) {
+  ctx.fillStyle = C.g3; ctx.fillRect(-0.09 * h / 4, 0, 0.18 * h / 4, h * 0.55);
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, h * 0.68, h * 0.3, 0, 7); ctx.fill();
+}
+function building(ctx, s, w, h, col = C.g1) {
+  ctx.fillStyle = col; ctx.fillRect(-w / 2, 0, w, h);
+  ctx.strokeStyle = C.g3; ctx.lineWidth = 1.4 / s; ctx.strokeRect(-w / 2, 0, w, h);
+  ctx.fillStyle = C.g2;
+  for (let y = h - 1.6; y > 1; y -= 1.8) for (let x = -w / 2 + 0.6; x < w / 2 - 0.7; x += 1.3) ctx.fillRect(x, y, 0.6, 0.8);
+}
+function post(ctx, s, h = 1.2) { ctx.fillStyle = C.g4; ctx.fillRect(-0.07, 0, 0.14, h); ctx.fillRect(-0.12, h - 0.06, 0.24, 0.1); }
+
+// scene presets
+const MTN_FAR = [[-420, 0], [-300, 22], [-230, 8], [-150, 30], [-80, 12], [-20, 34], [50, 14], [120, 28], [190, 6], [260, 26], [340, 10], [420, 0]];
+const MTN_NEAR = [[-260, 0], [-190, 12], [-140, 4], [-70, 18], [-20, 6], [30, 15], [95, 3], [160, 16], [230, 5], [300, 0]];
+const BLD = [[-17, 4, 9], [-12, 3.2, 13], [-8, 2.6, 7], [11, 3.4, 11], [15.5, 4, 8], [20, 3, 15], [-24, 3.5, 10], [26, 4, 7]];
+const CITY = [[-9, 3.4, 12], [-5.5, 3, 18], [-2, 3.6, 9], [1.8, 3, 22], [5.4, 3.6, 14], [9, 3, 10], [-13, 3.4, 15], [12.8, 3.6, 19]];
+
+function world(ctx, w, h, c, o = {}) {
+  ctx.save();
+  ctx.translate(w / 2, h / 2); ctx.rotate(c.roll || 0);
+  const blurBg = o.blurBg || 0, blurFg = o.blurFg || 0;
+  const setBlur = b => { ctx.filter = b > 0.05 ? `blur(${b.toFixed(2)}px)` : 'none'; };
+  // sky tint
+  if (o.sky) { ctx.fillStyle = o.sky; ctx.fillRect(-w * 2, -h * 3, w * 4, h * 6); }
+  setBlur(blurBg);
+  // sun / moon
+  const sun = o.sun === undefined ? [30, 30, 170] : o.sun;
+  if (sun) { const p = proj(c, ...sun); if (p.z > NEAR) { ctx.fillStyle = o.sunCol || C.blueL; ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0, 5.5 * p.s * (o.sunScale || 1)), 0, 7); ctx.fill(); } }
+  if (o.clouds) o.clouds.forEach(([X, Y, Z, r]) => { const p = proj(c, X, Y, Z); if (p.z < NEAR) return; ctx.fillStyle = C.g1; ctx.beginPath(); ctx.ellipse(p.x, p.y, r * 2.2 * p.s, r * p.s, 0, 0, 7); ctx.ellipse(p.x + r * 1.2 * p.s, p.y + r * .2 * p.s, r * 1.4 * p.s, r * .8 * p.s, 0, 0, 7); ctx.fill(); });
+  // mountains (far planes)
+  if (o.mountains !== false) {
+    const off = o.mtnZ || 0;
+    ctx.fillStyle = C.blueXL; poly(ctx, c, [...MTN_FAR.map(([x, y]) => [x, y, 175 + off])]); ctx.fill();
+    ctx.fillStyle = C.blueL; poly(ctx, c, [...MTN_NEAR.map(([x, y]) => [x, y, 120 + off])]); ctx.fill();
+  }
+  // ground + grid
+  if (o.grid !== false) {
+    ctx.save(); setBlur(blurBg * 0.6);
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 1.3; ctx.beginPath();
+    const z0 = Math.floor(c.z / 2) * 2, xs = o.gridX || 40;
+    for (let z = z0 + 2; z <= z0 + 90; z += (z - z0 < 30 ? 2 : 6)) seg(ctx, c, [-xs + c.x, 0, z], [xs + c.x, 0, z]);
+    for (let x = Math.floor(c.x / 2) * 2 - xs; x <= c.x + xs; x += 2) seg(ctx, c, [x, 0, z0 + 0.5], [x, 0, z0 + 90]);
+    ctx.stroke();
+    // horizon
+    ctx.strokeStyle = C.g2; ctx.lineWidth = 1.5; ctx.beginPath(); seg(ctx, c, [c.x - 400, 0, c.z + 300], [c.x + 400, 0, c.z + 300]); ctx.stroke();
+    ctx.restore();
+  }
+  // sprites sorted by depth
+  const list = [];
+  const add = (X, Y, Z, fn, fg) => list.push({ z: camZ(c, X, Y, Z), X, Y, Z, fn, fg });
+  if (o.buildings !== false) (o.city ? CITY.map(([x, bw, bh]) => [x, bw, bh, 30]) : BLD.map(([x, bw, bh]) => [x, bw, bh, 48])).forEach(([x, bw, bh, z]) => add(x, 0, z, (k, s) => building(k, s, bw, bh)));
+  if (o.trees !== false) [[-7, 22], [6.5, 19], [9.5, 24], [-11, 26], [3, 30]].forEach(([x, z]) => add(x, 0, z, (k, s) => tree(k, s, 4)));
+  if (o.tower) add(o.tower[0], 0, o.tower[1], (k, s) => { building(k, s, 6, 9.5, C.g1); k.fillStyle = C.g4; k.fillRect(-0.08, 9.5, 0.16, 2.2); k.fillStyle = C.blue; k.beginPath(); k.arc(0, 11.8, 0.3, 0, 7); k.fill(); });
+  if (o.ring) for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; add(o.ring[0] + Math.sin(a) * o.ring[2], 0, o.ring[1] + Math.cos(a) * o.ring[2], (k, s) => tree(k, s, 3.2, i % 3 ? C.g2 : C.blueXL)); }
+  if (o.extra) o.extra.forEach(e => add(e[0], e[1], e[2], e[3], e[4]));
+  if (o.person) { const pp = o.person; add(pp.x || 0, pp.y || 0, pp.z === undefined ? 8 : pp.z, (k, s) => person(k, s, pp), pp.fg); }
+  if (o.fg) o.fg.forEach(([X, Z, kind]) => add(X, 0, Z, (k, s) => kind === 'rock' ? (k.fillStyle = C.g3, k.beginPath(), k.ellipse(0, 0.1, 0.55, 0.38, 0, 0, 7), k.fill()) : post(k, s), true));
+  list.sort((a, b) => b.z - a.z);
+  for (const it of list) { setBlur(it.fg ? blurFg : blurBg); sprite(ctx, c, it.X, it.Y, it.Z, it.fn); }
+  ctx.filter = 'none';
+  if (o.after) o.after(ctx, c);
+  ctx.restore();
+}
+
+// ============================== VIEWFINDER CARD ==============================
+const CARD = mkCanvas(CW, CH), CK = CARD.getContext('2d');
+const TMP = mkCanvas(CW, CH), TK = TMP.getContext('2d');
+const TMP2 = mkCanvas(CW, CH), TK2 = TMP2.getContext('2d');
+function clear(k, w = CW, h = CH) { k.setTransform(1, 0, 0, 1, 0, 0); k.globalAlpha = 1; k.filter = 'none'; k.fillStyle = '#FFFFFF'; k.fillRect(0, 0, w, h); }
+// draw fnA then blend fnB on top with alpha a (into k)
+function blend(k, fnA, fnB, a) {
+  if (a <= 0.001) return fnA(k);
+  if (a >= 0.999) return fnB(k);
+  fnA(k);
+  clear(TK2); fnB(TK2); k.save(); k.setTransform(1, 0, 0, 1, 0, 0); k.globalAlpha = a; k.drawImage(TMP2, 0, 0); k.restore();
+}
+// motion blur: average n renders of fn(k, s) with s spread over [s0, s1]
+function mblur(k, fn, s0, s1, n) {
+  if (Math.abs(s1 - s0) < 1e-4 || n < 2) return fn(k, s0);
+  const acc = mkCanvasCached(), ak = acc.getContext('2d');
+  for (let i = 0; i < n; i++) {
+    clear(TK); fn(TK, lerp(s0, s1, (i + .5) / n));
+    ak.globalAlpha = 1 / (i + 1); ak.drawImage(TMP, 0, 0);
+  }
+  ak.globalAlpha = 1; k.save(); k.setTransform(1, 0, 0, 1, 0, 0); k.drawImage(acc, 0, 0); k.restore();
+}
+let _acc; function mkCanvasCached() { if (!_acc) _acc = mkCanvas(CW, CH); const k = _acc.getContext('2d'); k.globalAlpha = 1; k.fillStyle = '#fff'; k.fillRect(0, 0, CW, CH); return _acc; }
+
+function viewfinder(k, w, h, t, hud, hudCol) {
+  k.save();
+  const m = 13, L = 20;
+  k.strokeStyle = '#8F8F94'; k.lineWidth = 2.6; k.lineCap = 'round';
+  k.beginPath();
+  [[m, m, 1, 1], [w - m, m, -1, 1], [m, h - m, 1, -1], [w - m, h - m, -1, -1]].forEach(([x, y, sx, sy]) => { k.moveTo(x, y + sy * L); k.lineTo(x, y); k.lineTo(x + sx * L, y); });
+  k.stroke();
+  // center mark
+  k.strokeStyle = 'rgba(143,143,148,.55)'; k.lineWidth = 1.6; k.beginPath(); k.moveTo(w / 2 - 7, h / 2); k.lineTo(w / 2 + 7, h / 2); k.moveTo(w / 2, h / 2 - 7); k.lineTo(w / 2, h / 2 + 7); k.stroke();
+  // REC (smooth blink, about 1Hz)
+  const a = 0.55 + 0.45 * Math.cos(t * Math.PI * 2 * 9 / HOLD);   // 9 blinks in 9.4s (no seam at the loop)
+  k.fillStyle = C.blue; k.globalAlpha = a; k.beginPath(); k.arc(m + 16, m + 17, 5, 0, 7); k.fill(); k.globalAlpha = 1;
+  txt(k, 'REC', m + 27, m + 17, `600 14px ${MONO}`, '#7D7D82', 'left', 'middle');
+  if (hud) {
+    const f = `600 15px ${MONO}`, ww = tw(k, hud, f);
+    k.fillStyle = 'rgba(255,255,255,.82)'; rr(k, w - m - 14 - ww - 10, m + 6, ww + 20, 23, 6); k.fill();
+    txt(k, hud, w - m - 14, m + 18, f, hudCol || '#6E6E73', 'right', 'middle');
+  }
+  k.restore();
+}
+
+// ============================== CELLS ==============================
+// each: (k, w, h, u) where u = time within the cycle (0..CYC), cyc = cycle index; returns HUD string
+const RESET = 0.5;  // cross-fade back to the start state at the end
+function camCell(stateAt, hudAt, t0 = 0.5, t1 = 3.4) {
+  return (k, w, h, u) => {
+    const p = eIO(P(u, t0, t1));
+    const r = P(u, CYC - RESET, CYC);
+    blend(k, kk => stateAt(kk, w, h, p, u), kk => stateAt(kk, w, h, 0, u - CYC), eIOs(r));
+    return hudAt(r > 0.5 ? 0 : p, u);
+  };
+}
+const SC = { person: { z: 8 } };
+
+const CELLS = [];
+// 01 Pan: a rotation, so every layer slides sideways by the same amount
+CELLS[0] = camCell((k, w, h, p) => world(k, w, h, cam({ yaw: lerp(-0.32, 0.32, p) }), { person: { x: 0, z: 8 } }),
+  p => `${Math.round(lerp(-0.32, 0.32, p) * 57.3)}°`.replace(/^(\d)/, '+$1'));
+// 02 Tilt
+CELLS[1] = camCell((k, w, h, p) => world(k, w, h, cam({ pitch: lerp(-0.06, 0.36, p), y: 1.4 }), { person: { z: 7 }, tower: [0, 26], buildings: false, sun: [7, 13, 40], sunScale: 0.4 }),
+  p => `${Math.round(lerp(-0.06, 0.36, p) * 57.3)}°`.replace(/^(\d)/, '+$1'));
+// 03 Dolly in: the camera moves forward (near things grow a lot, far things barely change)
+CELLS[2] = camCell((k, w, h, p) => world(k, w, h, cam({ z: lerp(0, 5.8, p) }), { person: { z: 8 }, fg: [[-1.5, 3.6], [1.6, 4.8, 'rock']] }),
+  p => mm(F0));
+// 04 Zoom in: position fixed, only the focal length grows (everything scales by the same ratio)
+CELLS[3] = camCell((k, w, h, p) => world(k, w, h, cam({ f: F0 * Math.pow(8 / 2.2, p) }), { person: { z: 8 }, fg: [[-1.5, 3.6], [1.6, 4.8, 'rock']] }),
+  p => mm(F0 * Math.pow(8 / 2.2, p)));
+// 05 Tracking: moves sideways with the person (nearer layers slide faster)
+CELLS[4] = (k, w, h, u) => {
+  const x = (u - CYC / 2) * 1.7;
+  const fgp = []; for (let i = -12; i <= 12; i++) fgp.push([i * 1.6, 4]);
+  world(k, w, h, cam({ x, y: 1.3 }), { person: { x, z: 7.5, walk: u * 7 }, fg: fgp });
+  return '→ 1.7m/s';
+};
+// 06 Orbit: circles around the subject
+CELLS[5] = camCell((k, w, h, p) => {
+  const a = lerp(-0.95, 0.95, p), R = 6, P0 = [0, 0, 9];
+  const c = cam({ x: P0[0] + Math.sin(a) * R, z: P0[2] - Math.cos(a) * R, yaw: -a, y: 1.7, pitch: -0.07 });
+  world(k, w, h, c, {
+    person: { z: 9, face: a }, ring: [0, 9, 10], buildings: true, trees: false,
+    after: (kk, cc) => { kk.strokeStyle = C.blueM; kk.lineWidth = 2; kk.setLineDash([5, 5]); kk.beginPath(); for (let i = 0; i <= 48; i++) { const b = i / 48 * Math.PI * 2; const q = proj(cc, Math.sin(b) * 1.3, 0, 9 + Math.cos(b) * 1.3); i ? kk.lineTo(q.x, q.y) : kk.moveTo(q.x, q.y); } kk.stroke(); kk.setLineDash([]); }
+  });
+}, p => `${Math.round(lerp(-0.95, 0.95, p) * 57.3)}°`.replace(/^(\d)/, '+$1'), 0.5, 3.6);
+// 07 Crane up: the camera rises and ends up looking down
+CELLS[6] = camCell((k, w, h, p) => {
+  const y = lerp(1.4, 9, p), z = lerp(0, 1.5, p);
+  world(k, w, h, cam({ y, z, pitch: -0.86 * Math.atan2(y - 1.0, 8 - z) }), { person: { z: 8 } });
+}, p => `↑ ${lerp(1.4, 9, p).toFixed(1)}m`);
+// 08 Dolly zoom: the person keeps the same size, only the background stretches or shrinks
+CELLS[7] = camCell((k, w, h, p) => {
+  const d = lerp(3.2, 8, p), f = F0 * d / 8 * 1.0;
+  const c = cam({ z: 8 - d, f, y: 1.3 });
+  world(k, w, h, c, {
+    person: { z: 8 }, trees: true,
+    after: (kk, cc) => { const top = proj(cc, 0, 1.8, 8).y, bot = proj(cc, 0, 0, 8).y; kk.strokeStyle = C.blue; kk.lineWidth = 1.6; kk.setLineDash([6, 5]); kk.beginPath(); kk.moveTo(-80, top); kk.lineTo(80, top); kk.moveTo(-80, bot); kk.lineTo(80, bot); kk.stroke(); kk.setLineDash([]); }
+  });
+}, p => mm(F0 * lerp(3.2, 8, p) / 8));
+
+// 09 Rack focus
+CELLS[8] = camCell((k, w, h, p) => {
+  world(k, w, h, cam({ y: 1.1 }), {
+    person: { x: 0.9, z: 9 }, blurFg: 7 * p, blurBg: 6 * (1 - p),
+    extra: [[-0.75, 0, 2.0, (kk, s) => { kk.fillStyle = C.g3; kk.fillRect(-0.025, 0, 0.05, 0.75); kk.fillStyle = C.blueM; for (let i = 0; i < 6; i++) { kk.beginPath(); kk.ellipse(Math.cos(i) * 0.09, 0.8 + Math.sin(i) * 0.09, 0.08, 0.05, i, 0, 7); kk.fill(); } kk.fillStyle = C.blue; kk.beginPath(); kk.arc(0, 0.8, 0.05, 0, 7); kk.fill(); }, true]],
+    after: (kk, cc) => {   // focus frame
+      const a = proj(cc, -0.75, 0.8, 2.0), b = proj(cc, 0.9, 0.9, 9);
+      const x = lerp(a.x, b.x, p), y = lerp(a.y, b.y, p), r = lerp(46, 30, p);
+      kk.strokeStyle = C.blue; kk.lineWidth = 2; kk.beginPath();
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sy]) => { kk.moveTo(x + sx * r, y + sy * r - sy * 9); kk.lineTo(x + sx * r, y + sy * r); kk.lineTo(x + sx * r - sx * 9, y + sy * r); });
+      kk.stroke();
+    }
+  });
+}, p => `◎ ${lerp(2, 9, p).toFixed(0)}m`, 1.0, 2.6);
+// 10 Handheld
+CELLS[9] = (k, w, h, u) => {
+  const T = u * 2 * Math.PI / CYC;   // periods fit the cycle, so there is no seam
+  const n = (a, b, c2) => Math.sin(T * a + b) * c2;
+  const yaw = n(3, 0, .016) + n(7, 1, .008) + n(13, 2, .004), pitch = n(4, 2, .012) + n(9, .5, .006) + n(17, 1.2, .003), roll = n(5, 1, .02) + n(11, 3, .008);
+  world(k, w, h, cam({ yaw, pitch, roll, y: 1.5 + n(6, 0, .03) }), { person: { z: 6.5 } });
+  return 'HANDHELD';
+};
+// 11 FPV
+CELLS[10] = (k, w, h, u) => {
+  const sp = 14, z = u * sp, T = u * 2 * Math.PI / CYC;
+  const c = cam({ z, y: 1.4 + 0.5 * Math.sin(T * 2), roll: 0.22 * Math.sin(T * 2 + 0.6), yaw: 0.05 * Math.sin(T * 2), x: 0.6 * Math.sin(T * 2 - 0.4), pitch: -0.05 });
+  const ex = [];
+  const L = 8, base = Math.floor(z / L) * L;
+  for (let i = 0; i < 12; i++) { const zz = base + i * L; ex.push([-3.6, 0, zz, (kk, s) => tree(kk, s, 4.2)]); ex.push([3.6, 0, zz + L / 2, (kk, s) => tree(kk, s, 4.2, C.blueXL)]); }
+  world(k, w, h, c, {
+    buildings: false, trees: false, extra: ex, gridX: 20,
+    after: (kk) => {   // speed lines
+      kk.strokeStyle = 'rgba(150,150,155,.45)'; kk.lineWidth = 2;
+      for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + 0.3, ph = mod(u * 2.2 + i * 0.37, 1); const r0 = 120 + ph * 160; kk.beginPath(); kk.moveTo(Math.cos(a) * r0 * 1.9, Math.sin(a) * r0 * 0.8); kk.lineTo(Math.cos(a) * (r0 + 40) * 1.9, Math.sin(a) * (r0 + 40) * 0.8); kk.stroke(); }
+    }
+  });
+  return `${Math.round(sp * 3.6)}km/h`;
+};
+// 12 Dutch angle
+CELLS[11] = camCell((k, w, h, p) => world(k, w, h, cam({ roll: lerp(0, 0.36, p) }), { person: { z: 7 } }), p => `∠ ${Math.round(lerp(0, 0.36, p) * 57.3)}°`, 0.6, 2.2);
+// 13 Slow motion
+function jumpY(q) { return q <= 0 || q >= 1 ? 0 : 4 * q * (1 - q) * 1.1; }
+function leaves(u, speed) { const ex = []; for (let i = 0; i < 9; i++) { const ph = mod(u * speed / 4.7 + i / 9, 1); ex.push([-3 + i * 0.75 + Math.sin(i * 3) * 0.3, 3.4 - ph * 3.4, 6 + (i % 3), (kk) => { kk.fillStyle = i % 2 ? C.blueM : C.g3; kk.save(); kk.rotate(ph * 6 + i); kk.beginPath(); kk.ellipse(0, 0, 0.09, 0.045, 0, 0, 7); kk.fill(); kk.restore(); }]); } return ex; }
+CELLS[12] = (k, w, h, u) => {
+  const q = P(u, 0.5, 4.3);
+  world(k, w, h, cam({ y: 1.3 }), { person: { z: 7, y: jumpY(q), armUp: q > 0 && q < 1 }, extra: leaves(u, 1) });
+  return '120fps ×0.25';
+};
+// 14 Speed ramp: fast -> slow (a graph shows the speed)
+function rampTime(u) {   // playback speed v(u): 2.4 -> 0.25 (switches between u = 1.2 and 1.9)
+  const v = x => lerp(2.4, 0.25, eIOs(P(x, 1.2, 1.9)));
+  let s = 0; const N = 60; for (let i = 0; i < N; i++) { const x = u * (i + .5) / N; s += v(x) * u / N; } return { s, v: v(u) };
+}
+CELLS[13] = (k, w, h, u) => {
+  const uu = Math.min(u, CYC - RESET);
+  const draw = (kk, uu) => {
+    const { s, v } = rampTime(uu);
+    const x = -6 + s * 2.0, q = P(x, -1.5, 2.5);
+    world(kk, w, h, cam({ y: 1.3 }), {
+      person: { x, z: 8, walk: s * 9, y: jumpY(q) * 0.9, armUp: q > 0 && q < 1 },
+      after: (k2) => {   // speed graph
+        const gx = -w / 2 + 26, gy = h / 2 - 22, gw = 120, gh = 40;
+        k2.fillStyle = 'rgba(255,255,255,.85)'; rr(k2, gx - 8, gy - gh - 10, gw + 16, gh + 18, 6); k2.fill();
+        k2.strokeStyle = C.faint; k2.lineWidth = 1.5; k2.beginPath(); k2.moveTo(gx, gy); k2.lineTo(gx + gw, gy); k2.stroke();
+        k2.strokeStyle = C.blue; k2.lineWidth = 2.5; k2.beginPath();
+        for (let i = 0; i <= 40; i++) { const xx = i / 40 * (CYC - RESET), vv = rampTime(xx).v; const X = gx + i / 40 * gw, Y = gy - vv / 2.4 * gh; i ? k2.lineTo(X, Y) : k2.moveTo(X, Y); }
+        k2.stroke();
+        const X = gx + uu / (CYC - RESET) * gw, Y = gy - v / 2.4 * gh; k2.fillStyle = C.blue; k2.beginPath(); k2.arc(X, Y, 5, 0, 7); k2.fill();
+      }
+    });
+    return v;
+  };
+  const r = P(u, CYC - RESET, CYC); let v;
+  blend(k, kk => { v = draw(kk, uu); }, kk => draw(kk, 0), eIOs(r));
+  return `×${(r > .5 ? 2.4 : v).toFixed(1)}`;
+};
+// 15 Time-lapse: the sun moves, clouds and people fast-forward
+CELLS[14] = camCell((k, w, h, p, u) => {
+  const a = lerp(-1.25, 1.25, p);
+  const clouds = [[-20 + mod(p * 140 + 0, 80) - 10, 18, 90, 2.2], [-50 + mod(p * 140 + 40, 80), 24, 120, 3], [-10 + mod(p * 140 + 20, 80) - 30, 13, 70, 1.6]];
+  const ex = [];
+  for (let i = 0; i < 7; i++) { const ph = mod(p * 6 + i / 7, 1), dir = i % 2 ? 1 : -1; ex.push([dir * lerp(-9, 9, ph), 0, 10 + i * 1.3, (kk) => { kk.fillStyle = i % 3 ? C.g4 : C.blueM; kk.fillRect(-0.12, 0, 0.24, 0.9); kk.beginPath(); kk.arc(0, 1.05, 0.13, 0, 7); kk.fill(); }]); }
+  world(k, w, h, cam({ y: 1.6, pitch: 0.08 }), {
+    sun: [Math.sin(a) * 120, Math.cos(a) * 60 - 8, 170], sunCol: C.blueM, clouds, extra: ex,
+    after: (kk, cc) => {   // building shadows
+      kk.fillStyle = 'rgba(160,160,165,.22)';
+      BLD.slice(0, 6).forEach(([x, bw, bh]) => { const L = bh * 0.9; const q1 = proj(cc, x - bw / 2, 0, 48), q2 = proj(cc, x + bw / 2, 0, 48), q3 = proj(cc, x + bw / 2 - Math.sin(a) * L, 0, 48 - Math.cos(a) * L * 0.4 - 1), q4 = proj(cc, x - bw / 2 - Math.sin(a) * L, 0, 48 - Math.cos(a) * L * 0.4 - 1); kk.beginPath(); kk.moveTo(q1.x, q1.y); kk.lineTo(q2.x, q2.y); kk.lineTo(q3.x, q3.y); kk.lineTo(q4.x, q4.y); kk.fill(); });
+    }
+  });
+}, p => { const m = Math.round(lerp(6 * 60, 18 * 60, p) / 10) * 10; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }, 0.4, 4.1);
+// 16 Freeze frame
+CELLS[15] = (k, w, h, u) => {
+  // hold for 1.4s at the top of the jump
+  const tj = u < 1.6 ? u : u < 3.0 ? 1.6 : u - 1.4;   // real time -> footage time
+  const q = P(tj, 0.6, 2.6);
+  const frozen = u >= 1.6 && u < 3.0;
+  world(k, w, h, cam({ y: 1.3 }), { person: { z: 7, y: jumpY(q), armUp: q > 0 && q < 1 }, extra: leaves(tj, 1.5) });
+  if (frozen) {
+    const a = Math.min(1, (u - 1.6) / 0.12, (3.0 - u) / 0.12);
+    k.save(); k.globalAlpha = a; k.strokeStyle = C.blue; k.lineWidth = 5; k.strokeRect(2.5, 2.5, w - 5, h - 5);
+    k.fillStyle = 'rgba(255,255,255,.88)'; rr(k, w / 2 - 34, h - 58, 68, 40, 8); k.fill();
+    k.fillStyle = C.blue; k.fillRect(w / 2 - 12, h - 49, 8, 22); k.fillRect(w / 2 + 4, h - 49, 8, 22); k.restore();
+  }
+  return frozen ? 'FREEZE' : '';
+};
+
+// ---- Transitions: odd cycles go back from B to A (no reset needed)
+const sceneA = (k, w, h, extra = {}) => world(k, w, h, cam(Object.assign({ y: 1.4 }, extra.cam)), Object.assign({ person: { x: -0.6, z: 7 } }, extra));
+const CAR = [1.2, 0, 9, (kk) => { kk.fillStyle = C.blue; rr(kk, -1.9, 0.35, 3.8, 0.75, 0.25); kk.fill(); rr(kk, -1.1, 0.95, 2.1, 0.62, 0.28); kk.fill(); kk.fillStyle = '#fff'; kk.fillRect(-0.85, 1.08, 0.8, 0.36); kk.fillRect(0.12, 1.08, 0.7, 0.36); kk.fillStyle = C.ink; [-1.15, 1.15].forEach(x => { kk.beginPath(); kk.arc(x, 0.34, 0.34, 0, 7); kk.fill(); }); }];
+const SB = { city: true, mountains: false, trees: false, sun: [-26, 40, 150], extra: [CAR] };
+const sceneB = (k, w, h, extra = {}) => world(k, w, h, cam(Object.assign({ y: 1.6, pitch: 0.1 }, extra.cam)), Object.assign({}, SB, extra));
+function abCell(trans, hudFn) {
+  return (k, w, h, u, cyc) => {
+    const S = cyc % 2 === 0 ? [sceneA, sceneB] : [sceneB, sceneA];
+    trans(k, w, h, u, S[0], S[1], cyc);
+    return hudFn ? hudFn(u, cyc) : (cyc % 2 === 0 ? 'A → B' : 'B → A');
+  };
+}
+// 17 Jump cut (same framing, only the person's position and the time jump)
+CELLS[16] = (k, w, h, u) => {
+  const shots = [[-2.2, 0], [1.4, 1], [-0.4, 0], [2.4, 1], [0.6, 0]];
+  const times = ['10:02', '10:17', '10:41', '11:06', '11:30'];
+  const i = Math.min(4, Math.floor(u / (CYC / 5)));
+  const [x, arm] = shots[i];
+  world(k, w, h, cam({ y: 1.4 }), { person: { x, z: 7, armUp: !!arm } });
+  return times[i];
+};
+// 18 Match cut (a thrown ball -> a sun at the same position and size)
+CELLS[17] = (k, w, h, u) => {
+  const cut = 2.3;
+  const BX = 120, BY = -46, BR = 17;
+  if (u < cut) {
+    const q = eOut(P(u, 0.5, cut));
+    world(k, w, h, cam({ y: 1.4 }), {
+      person: { x: -1.2, z: 7, armUp: q > 0.05 }, sun: null,
+      after: (kk, cc) => { const s = proj(cc, -1.2, 2.3, 7); const x = lerp(s.x, BX, q), y = lerp(s.y, BY, q) - Math.sin(q * Math.PI) * 30, r = lerp(5, BR, q); kk.fillStyle = C.blue; kk.beginPath(); kk.arc(x, y, r, 0, 7); kk.fill(); }
+    });
+  } else {
+    const q = P(u, cut, CYC);
+    world(k, w, h, cam({ y: 1.2 }), {
+      buildings: false, sun: null, trees: true,
+      after: (kk) => { kk.fillStyle = C.blue; kk.beginPath(); kk.arc(BX, BY + q * 14, BR, 0, 7); kk.fill(); }
+    });
+  }
+  // dotted circle showing that the shapes match
+  const g = Math.max(0, 1 - Math.abs(u - cut) / 0.7);
+  if (g > 0) { k.save(); k.translate(w / 2, h / 2); k.globalAlpha = g; k.strokeStyle = C.blue; k.lineWidth = 2; k.setLineDash([5, 4]); k.beginPath(); k.arc(BX, BY + (u > cut ? P(u, cut, CYC) * 14 : 0), BR + 9, 0, 7); k.stroke(); k.restore(); }
+  return u < cut ? 'SHOT 1' : 'SHOT 2';
+};
+// 19 Whip pan (motion blur into the next scene)
+CELLS[18] = abCell((k, w, h, u, A, B) => {
+  const t0 = 1.7, t1 = 2.5;
+  const at = (kk, s) => {   // s: progress 0..1. First half pans A to the right, second half B comes in from the left and stops
+    if (s < .5) world(kk, w, h, cam({ y: 1.4, yaw: eIOs(s * 2) * 0.45 }), A === sceneA ? { person: { x: -0.6, z: 7 } } : SB);
+    else world(kk, w, h, cam({ y: 1.4, yaw: -(1 - eIOs((s - .5) * 2)) * 0.45 }), B === sceneA ? { person: { x: -0.6, z: 7 } } : SB);
+  };
+  if (u < t0) return A(k, w, h);
+  if (u > t1) return B(k, w, h);
+  const s = P(u, t0, t1), ds = 1 / FPS / (t1 - t0);
+  mblur(k, at, clamp(s - ds * 1.6), clamp(s + ds * 1.6), 9);
+});
+// 20 Cross dissolve
+CELLS[19] = abCell((k, w, h, u, A, B) => blend(k, kk => A(kk, w, h), kk => B(kk, w, h), eIOs(P(u, 1.5, 3.0))));
+// 21 Wipe
+CELLS[20] = abCell((k, w, h, u, A, B) => {
+  const p = eIO(P(u, 1.7, 2.8)), ex = p * (w + 8) - 4;
+  A(k, w, h);
+  if (p > 0) { k.save(); k.beginPath(); k.rect(0, 0, ex, h); k.clip(); k.fillStyle = '#fff'; k.fillRect(0, 0, w, h); B(k, w, h); k.restore(); }
+  if (p > 0 && p < 1) { k.fillStyle = C.blue; k.fillRect(ex - 2, 0, 4, h); }
+});
+// 22 Smash cut (quiet scene -> sudden loud scene)
+CELLS[21] = (k, w, h, u) => {
+  const cut = 2.4, r = P(u, CYC - RESET, CYC);
+  const quiet = (kk, uu) => {
+    world(kk, w, h, cam({ y: 1.2 }), {
+      buildings: false, sun: [24, 26, 170], sunCol: C.blueXL, extra: [[0.4, 0, 7, (k2) => { k2.fillStyle = C.blue; rr(k2, -0.8, 0, 1.6, 0.34, 0.15); k2.fill(); k2.beginPath(); k2.arc(-0.95, 0.24, 0.17, 0, 7); k2.fill(); }]],
+      after: (k2, cc) => { const p0 = proj(cc, -0.6, 1.0, 7); for (let i = 0; i < 3; i++) { const ph = mod(uu * 0.35 + i / 3, 1); k2.globalAlpha = Math.sin(ph * Math.PI) * 0.8; txt(k2, 'z', p0.x - 10 - ph * 20 - i * 4, p0.y - ph * 50, `600 ${16 + i * 4}px ${EN}`, C.sub, 'center', 'middle'); } k2.globalAlpha = 1; }
+    });
+    meter(kk, w, h, 0.08 + 0.04 * Math.sin(uu * 5));
+  };
+  const loud = (kk, uu) => {
+    const T = uu * 40;
+    const c = cam({ y: 1.25, f: F0 * 2.6, roll: -0.12 + Math.sin(T) * 0.03, yaw: Math.sin(T * 1.3) * 0.006 });
+    world(kk, w, h, c, {
+      buildings: false, trees: false, mountains: false, grid: true, sun: null,
+      person: { x: 0, z: 7, armUp: true, walk: 0.6 },
+      after: (k2) => { k2.strokeStyle = C.blue; k2.lineWidth = 3.5; for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2 + 0.1; const r0 = 92 + (i % 3) * 14; k2.beginPath(); k2.moveTo(Math.cos(a) * r0 * 1.7, Math.sin(a) * r0); k2.lineTo(Math.cos(a) * 500, Math.sin(a) * 300); k2.stroke(); } }
+    });
+    meter(kk, w, h, 0.85 + 0.15 * Math.sin(uu * 31));
+  };
+  if (u < cut) quiet(k, u);
+  else blend(k, kk => loud(kk, u), kk => quiet(kk, 0), eIOs(r));
+  return u < cut || r > .5 ? '♪ Quiet' : '♪ LOUD';
+};
+function meter(k, w, h, lv) {   // volume meter (bottom left)
+  const x = 24, y = h - 22, n = 8;
+  for (let i = 0; i < n; i++) { k.fillStyle = (i + 0.5) / n < lv ? C.blue : C.g2; k.fillRect(x + i * 9, y - 6 - i * 2.2, 6, 6 + i * 2.2); }
+}
+// 23/24 J-cut / L-cut: picture on top, video and audio timeline below
+function splitCell(lead) {   // lead>0: audio first (J) / lead<0: audio after (L)
+  return (k, w, h, u, cyc) => {
+    const vh = 134;
+    const p = clamp((u - 0.4) / 3.6);       // playhead
+    const r = P(u, CYC - RESET, CYC);
+    const X0 = 70, X1 = w - 22, cutV = 0.55, cutA = cutV - lead;
+    const draw = (kk, p) => {
+      // picture
+      kk.save(); kk.beginPath(); kk.rect(0, 0, w, vh); kk.clip();
+      (p < cutV ? sceneA : sceneB)(kk, w, vh, { cam: { pitch: p < cutV ? -0.13 : -0.06 } });
+      // audio playing now
+      const aB = p >= cutA, lab = aB ? '♪ Audio B' : '♪ Audio A', f = `700 15px ${EN}`;
+      const bw = tw(kk, lab, f) + 22;
+      kk.fillStyle = aB ? C.blue : '#8E8E93'; rr(kk, w - 42 - bw, vh - 40, bw, 26, 13); kk.fill();
+      txt(kk, lab, w - 42 - bw / 2, vh - 26.5, f, '#fff', 'center', 'middle');
+      const sl = p < cutV ? 'A' : 'B';
+      kk.fillStyle = 'rgba(255,255,255,.9)'; rr(kk, 42, vh - 40, 80, 26, 13); kk.fill();
+      txt(kk, 'Video ' + sl, 82, vh - 26.5, `700 15px ${EN}`, C.ink, 'center', 'middle');
+      kk.restore();
+      kk.strokeStyle = C.border; kk.lineWidth = 1.5; kk.beginPath(); kk.moveTo(0, vh + .5); kk.lineTo(w, vh + .5); kk.stroke();
+      // timeline
+      const tracks = [['Video', vh + 14, cutV], ['Audio', vh + 44, cutA]];
+      const xAt = q => lerp(X0, X1, q);
+      tracks.forEach(([name, y, cut]) => {
+        txt(kk, name, 16, y + 11, `600 15px ${EN}`, C.sub, 'left', 'middle');
+        kk.fillStyle = C.g2; rr(kk, X0, y, xAt(cut) - X0 - 2, 22, 5); kk.fill();
+        kk.fillStyle = C.blueL; rr(kk, xAt(cut) + 2, y, X1 - xAt(cut) - 2, 22, 5); kk.fill();
+        txt(kk, 'A', X0 + 10, y + 11.5, `700 14px ${EN}`, C.g4, 'left', 'middle');
+        txt(kk, 'B', xAt(cut) + 12, y + 11.5, `700 14px ${EN}`, C.blue, 'left', 'middle');
+        if (name === 'Audio') {   // waveform
+          kk.strokeStyle = 'rgba(255,255,255,.95)'; kk.lineWidth = 1.6; kk.beginPath();
+          for (let x = X0 + 26; x < X1 - 6; x += 5) { if (x < X0 + 24 || (x > xAt(cut) - 4 && x < xAt(cut) + 26)) continue; const a = 3 + 5 * Math.abs(Math.sin(x * 0.37) * Math.cos(x * 0.11)); kk.moveTo(x, y + 11 - a); kk.lineTo(x, y + 11 + a); }
+          kk.stroke();
+        }
+      });
+      // highlight the offset part
+      const a1 = xAt(Math.min(cutA, cutV)), a2 = xAt(Math.max(cutA, cutV));
+      kk.fillStyle = 'rgba(47,107,235,.12)'; kk.fillRect(a1, vh + 8, a2 - a1, 64);
+      kk.strokeStyle = C.blue; kk.lineWidth = 1.5; kk.setLineDash([4, 3]); kk.beginPath(); kk.moveTo(a1, vh + 8); kk.lineTo(a1, vh + 72); kk.moveTo(a2, vh + 8); kk.lineTo(a2, vh + 72); kk.stroke(); kk.setLineDash([]);
+      // playhead
+      const hx = xAt(p); kk.fillStyle = C.ink; kk.fillRect(hx - 1.5, vh + 6, 3, 68); kk.beginPath(); kk.moveTo(hx - 6, vh + 4); kk.lineTo(hx + 6, vh + 4); kk.lineTo(hx, vh + 11); kk.fill();
+    };
+    blend(k, kk => draw(kk, p), kk => draw(kk, 0), eIOs(r));
+    return null;
+  };
+}
+CELLS[22] = splitCell(0.2);
+CELLS[23] = splitCell(-0.2);
+
+// ============================== PAGE ==============================
+function drawCard(ctx, idx, x, y, tau) {
+  const u = mod(tau, CYC), cyc = Math.floor(tau / CYC);
+  clear(CK);
+  CK.save();
+  const hud = CELLS[idx](CK, CW, CH, u, cyc);
+  CK.restore();
+  CK.setTransform(1, 0, 0, 1, 0, 0); CK.globalAlpha = 1; CK.filter = 'none';
+  const vh = (idx >= 22) ? 134 : CH;
+  viewfinder(CK, CW, vh, tau, hud);
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.05)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 2;
+  rr(ctx, x, y, CW, CH, 14); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+  ctx.save(); rr(ctx, x, y, CW, CH, 14); ctx.clip(); ctx.drawImage(CARD, x, y); ctx.restore();
+  ctx.strokeStyle = C.border; ctx.lineWidth = 2; rr(ctx, x + 1, y + 1, CW - 2, CH - 2, 13); ctx.stroke();
+  const [no, name, desc] = ITEMS[idx];
+  txt(ctx, no, x + 4, y + CH + 46, `500 38px ${EN}`, C.blue, 'left', 'alphabetic');
+  const nw = tw(ctx, no, `500 38px ${EN}`);
+  txt(ctx, name, x + 4 + nw + 14, y + CH + 46, `600 37px ${EN}`, C.ink, 'left', 'alphabetic');
+  txt(ctx, desc, x + 6, y + CH + 80, `400 22px ${EN}`, C.sub, 'left', 'alphabetic');
+}
+function drawPage(ctx, pg, ox, tau) {
+  ctx.save(); ctx.translate(ox, 0);
+  const pd = PAGES[pg];
+  // heading
+  let x = MX; const y = 66, f1 = `600 32px ${EN}`;
+  txt(ctx, 'Camera Moves & Transitions', x, y, f1, C.ink); x += tw(ctx, 'Camera Moves & Transitions', f1) + 14;
+  txt(ctx, pd.no, x, y, `500 33px ${EN}`, C.blue); x += tw(ctx, pd.no, `500 33px ${EN}`) + 14;
+  ctx.fillStyle = C.faint; ctx.fillRect(x, y - 11, 30, 2); x += 44;
+  txt(ctx, pd.title, x, y, f1, C.ink);
+  // the heading is long, so the note at the top right (pd.note) is not drawn
+  for (let i = 0; i < 8; i++) {
+    const r = Math.floor(i / 2), c = i % 2;
+    drawCard(ctx, pg * 8 + i, MX + c * (CW + GAP), ROW0 + r * PITCH, tau);
+  }
+  ctx.restore();
+}
+function dots(ctx, pos) {   // pos: 0..2 (current page)
+  const y = H - 26, sp = 44;
+  for (let i = 0; i < 3; i++) {
+    const d = Math.min(Math.abs(pos - i), Math.abs(pos - i - 3));
+    const a = clamp(1 - d), wd = lerp(12, 36, a);
+    ctx.fillStyle = `rgb(${Math.round(lerp(201, 47, a))},${Math.round(lerp(201, 107, a))},${Math.round(lerp(204, 235, a))})`;
+    rr(ctx, W / 2 + (i - 1) * sp - wd / 2, y - 6, wd, 12, 6); ctx.fill();
+  }
+}
+function renderFrame(i) {
+  const t = i / FPS;
+  cx.setTransform(1, 0, 0, 1, 0, 0); cx.globalAlpha = 1;
+  cx.fillStyle = C.bg; cx.fillRect(0, 0, W, H);
+  drawPage(cx, PAGE_ONLY, 0, t);
+  dots(cx, PAGE_ONLY);
+}
+window.renderFrame = renderFrame;
+window.prepareFrame = async () => { };
+document.fonts.ready.then(() => { window.READY = true; });
+
+// browser preview
+if (!location.search.includes('render=1')) {
+  const m = location.search.match(/t=([\d.]+)/);
+  if (m) renderFrame(Math.round(parseFloat(m[1]) * FPS));
+  else { let i = 0; setInterval(() => { renderFrame(i); i = (i + 1) % window.N_FRAMES; }, 1000 / FPS); }
+}
+</script>
+</body></html>

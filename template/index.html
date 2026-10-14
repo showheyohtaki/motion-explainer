@@ -1,0 +1,139 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Name Cheat Sheet Template</title>
+<style>html,body{margin:0;background:#F4F3F0}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script>
+// Blank starting point for a "24 names" video: 3 pages x 8 cards, 1200x1350, 30fps, 9.4s per page.
+// Only the page frame is here (heading, 2x4 grid, labels under each card, page dots) and the
+// render contract. Every card shows the same placeholder. Replace CELLS[0..23] with your own drawings.
+// The look of the cards is yours to decide; the frame can change too, as long as the rules in PROMPT.md hold.
+//
+// Render contract (used by render.mjs):
+//   window.N_FRAMES        frames in one page (282 = 9.4s x 30fps)
+//   window.renderFrame(i)  draws frame i on <canvas id="c">. Must depend on i only (no clock, no unseeded random)
+//   window.prepareFrame(i) optional, may be async
+//   window.READY           true when fonts are ready
+//   window.CARD_RECTS      where the 8 cards are, for `render.mjs --cards` and `check.mjs`. Update it if you change the layout
+// URL: ?page=1|2|3 picks the page, ?t=3.5 shows a still at 3.5s, ?render=1 turns off the preview loop.
+
+// ============================== CONTENT ==============================
+const SERIES = 'Your topic';                          // top-left heading
+const PAGES = [                                        // 3 groups of 8, basic -> advanced inside each group
+  { no: '1/3', title: 'Group one' },
+  { no: '2/3', title: 'Group two' },
+  { no: '3/3', title: 'Group three' },
+];
+// [number, name, second line]. In a set that is not in English, the second line is always the English name
+// (the one practitioners really use, so anyone can type it into an AI). In an English set, the second line
+// can be the short description (examples/camera-moves/en does this).
+const ITEMS = Array.from({ length: 24 }, (_, i) => {
+  const n = String(i + 1).padStart(2, '0');
+  return [n, `Name ${n}`, `Second line ${n}`];
+});
+
+// ============================== LOOK ==============================
+const W = 1200, H = 1350, FPS = 30;
+const PAGE = 9.4;               // seconds per page = per video
+const CYC = PAGE / 2;           // each card plays twice per page (4.7s), so the video loops without a jump
+const C = {
+  bg: '#F4F3F0', card: '#FFFFFF', border: '#E3E1DC', ink: '#1E1E21', sub: '#8E8E93', faint: '#C9C9CC',
+  accent: '#2F6BEB', stage: '#F1F0EE', line: '#CFCECB'
+};
+// Fonts must be installed on the machine that renders. Nothing is loaded from the network.
+// Put the font for your language first (e.g. "Noto Sans JP", "PingFang SC", "Noto Sans Arabic").
+const FONT = '"Helvetica Neue", "Hiragino Sans", "PingFang SC", "Noto Sans", "Noto Sans CJK JP", system-ui, sans-serif';
+
+// layout: 2 columns x 4 rows. Card 539x208. Name about 36px, second line 22px: smaller is hard to read on a phone.
+const MX = 44, GAP = 34, CW = (W - MX * 2 - GAP) / 2, CH = 208, ROW0 = 104, PITCH = 300;
+// Start the cards at slightly different times so their key moments do not all happen at once (seconds).
+const OFFS = [0, 0.6, 1.2, 1.8, 0.3, 0.9, 1.5, 2.1];
+window.CARD_RECTS = Array.from({ length: 8 }, (_, i) => [MX + (i % 2) * (CW + GAP), ROW0 + Math.floor(i / 2) * PITCH, CW, CH]);
+
+// ============================== HELPERS ==============================
+const DEFAULT_PAGE = 1;
+const PAGE_ONLY = Math.min(3, Math.max(1, +(new URLSearchParams(location.search).get('page')) || DEFAULT_PAGE)) - 1;
+window.N_FRAMES = Math.round(PAGE * FPS);
+const cv = document.getElementById('c'); cv.width = W; cv.height = H; const cx = cv.getContext('2d');
+const CARD = document.createElement('canvas'); CARD.width = CW; CARD.height = CH; const CK = CARD.getContext('2d');
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, x) => a + (b - a) * x;
+const P = (t, a, b) => clamp((t - a) / (b - a));                       // 0..1 progress of t between a and b
+const mod = (a, n) => ((a % n) + n) % n;
+const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const easeOut = x => 1 - Math.pow(1 - x, 3);
+function rand(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; } // seeded random
+function rr(k, x, y, w, h, r) { k.beginPath(); k.roundRect(x, y, w, h, r); }
+function txt(k, s, x, y, font, col, align = 'left', base = 'alphabetic') {
+  k.font = font; k.fillStyle = col; k.textAlign = align; k.textBaseline = base; k.fillText(s, x, y);
+}
+function tw(k, s, font) { k.font = font; return k.measureText(s).width; }
+// A typical cycle: hold the start, move, hold the result, go back to the start before the cycle ends.
+// Returns 0..1. With the defaults: still 0-0.5s, move 0.5-1.7s, hold 1.7-3.9s, return 3.9-4.5s, still to 4.7s.
+function act(u, a = 0.5, b = 1.7, c = 3.9, d = 4.5) {
+  return easeInOut(P(u, a, b)) * (1 - easeInOut(P(u, c, d)));
+}
+
+// ============================== CARDS ==============================
+// Each cell draws one card. k: 2D context of the card (CW x CH), u: seconds inside the 4.7s cycle (0..4.7).
+// Draw from u only. Whatever you draw at u=4.7 must match u=0, or the loop will jump.
+function placeholder(k, w, h, u, idx) {
+  k.fillStyle = C.stage; k.fillRect(0, 0, w, h);
+  txt(k, ITEMS[idx][0], w / 2, h / 2, `600 120px ${FONT}`, '#E6E5E2', 'center', 'middle');
+  k.strokeStyle = C.line; k.lineWidth = 3; k.setLineDash([2, 12]); k.lineCap = 'round';
+  k.beginPath(); k.moveTo(90, h / 2); k.lineTo(w - 90, h / 2); k.stroke(); k.setLineDash([]);
+  const x = lerp(90, w - 90, act(u));
+  k.fillStyle = C.accent; k.beginPath(); k.arc(x, h / 2, 26, 0, Math.PI * 2); k.fill();
+}
+const CELLS = Array.from({ length: 24 }, (_, idx) => (k, w, h, u) => placeholder(k, w, h, u, idx));
+
+// ============================== PAGE ==============================
+function drawCard(k, idx, x, y, tau) {
+  const u = mod(tau + OFFS[idx % 8], CYC);
+  CK.setTransform(1, 0, 0, 1, 0, 0); CK.globalAlpha = 1; CK.filter = 'none'; CK.globalCompositeOperation = 'source-over';
+  CK.clearRect(0, 0, CW, CH);
+  CK.save(); CELLS[idx](CK, CW, CH, u); CK.restore();
+  k.save(); k.shadowColor = 'rgba(0,0,0,.06)'; k.shadowBlur = 10; k.shadowOffsetY = 2;
+  rr(k, x, y, CW, CH, 14); k.fillStyle = C.card; k.fill(); k.restore();
+  k.save(); rr(k, x, y, CW, CH, 14); k.clip(); k.drawImage(CARD, x, y); k.restore();
+  k.strokeStyle = C.border; k.lineWidth = 2; rr(k, x + 1, y + 1, CW - 2, CH - 2, 13); k.stroke();
+  // labels: number + name on one line (shrinks a little if the name is long), second line below
+  const [no, name, second] = ITEMS[idx];
+  const fNo = `500 38px ${FONT}`, nw = tw(k, no, fNo);
+  let fs = 36; while (fs > 26 && nw + 14 + tw(k, name, `600 ${fs}px ${FONT}`) > CW - 8) fs -= 1;
+  txt(k, no, x + 4, y + CH + 46, fNo, C.accent);
+  txt(k, name, x + 4 + nw + 14, y + CH + 46, `600 ${fs}px ${FONT}`, C.ink);
+  txt(k, second, x + 6, y + CH + 80, `400 22px ${FONT}`, C.sub);
+}
+function drawPage(k, pg, tau) {
+  const pd = PAGES[pg];
+  let x = MX; const y = 66, f1 = `600 32px ${FONT}`, fN = `500 33px ${FONT}`;
+  txt(k, SERIES, x, y, f1, C.ink); x += tw(k, SERIES, f1) + 14;
+  txt(k, pd.no, x, y, fN, C.accent); x += tw(k, pd.no, fN) + 14;
+  k.fillStyle = C.faint; k.fillRect(x, y - 11, 30, 2); x += 44;
+  txt(k, pd.title, x, y, f1, C.ink);
+  for (let i = 0; i < 8; i++) drawCard(k, pg * 8 + i, MX + (i % 2) * (CW + GAP), ROW0 + Math.floor(i / 2) * PITCH, tau);
+}
+function dots(k, pg) {   // page position: shows that there are 3 videos
+  const y = H - 26, sp = 44;
+  for (let i = 0; i < 3; i++) { const on = i === pg, wd = on ? 36 : 12; k.fillStyle = on ? C.accent : C.faint; rr(k, W / 2 + (i - 1) * sp - wd / 2, y - 6, wd, 12, 6); k.fill(); }
+}
+function renderFrame(i) {
+  const t = i / FPS;
+  cx.setTransform(1, 0, 0, 1, 0, 0); cx.globalAlpha = 1;
+  cx.fillStyle = C.bg; cx.fillRect(0, 0, W, H);
+  drawPage(cx, PAGE_ONLY, t);
+  dots(cx, PAGE_ONLY);
+}
+window.renderFrame = renderFrame;
+window.prepareFrame = async () => { };
+document.fonts.ready.then(() => { window.READY = true; });
+
+// browser preview
+if (!location.search.includes('render=1')) {
+  const m = location.search.match(/t=([\d.]+)/);
+  if (m) renderFrame(Math.round(parseFloat(m[1]) * FPS));
+  else { let i = 0; setInterval(() => { renderFrame(i); i = (i + 1) % window.N_FRAMES; }, 1000 / FPS); }
+}
+</script>
+</body></html>

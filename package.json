@@ -1,0 +1,17 @@
+{
+  "name": "motion-explainer",
+  "version": "1.0.0",
+  "description": "A prompt and render kit for making \"24 names\" explainer animations (3 looping videos + a cheat sheet) for any field, in any language.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}
