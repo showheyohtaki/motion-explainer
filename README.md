@@ -2,14 +2,10 @@
 
 **Teach the words of your craft. Make the world more creative.**
 
-**English** | [日本語](README.ja.md)
+**English** | [日本語](README.ja.md) | [中文](README.zh.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
 A prompt that lets you make **"24 names" explainer animations for your own field**: three looping videos with 8 animated cards each, and a one-page cheat sheet, showing the names every practitioner in your field should know.
 Give this repository to a coding AI (Claude Code, Codex, Cursor, and so on), tell it your field, and it walks you through the whole set.
-
-> 日本語の説明は [README.ja.md](README.ja.md) にあります。プロンプトの日本語版は [PROMPT.ja.md](PROMPT.ja.md) です。
-> 中文用户：把这个仓库交给 Claude Code、Codex 等编程 AI，并让它"阅读 PROMPT.md 并照做"，就可以用中文制作你所在领域的版本。
-> Any language: the prompt works for labels in any language. Tell the AI which one.
 
 ![Two example sets: camera moves (left) and motion graphics (right)](assets/preview.gif)
 

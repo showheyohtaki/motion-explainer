@@ -2,13 +2,10 @@
 
 **あなたの専門用語で、世界をもっとクリエイティブに。**
 
-[English](README.md) | **日本語**
+[English](README.md) | **日本語** | [中文](README.zh.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
 **あなたの分野の「必修の名前24」の解説アニメーション**を作るためのプロンプトです。8個の小さなアニメーションが並ぶループ動画3本と早見表1枚で、その分野の人なら知っておきたい名前を見せます。
 このリポジトリをコーディングAI（Claude Code、Codex、Cursor など）に渡し、分野を伝えれば、一式を最後まで一緒に作れます。
-
-> For English, see [README.md](README.md) and [PROMPT.md](PROMPT.md).
-> 中文用户：把这个仓库交给 Claude Code、Codex 等编程 AI，并让它"阅读 PROMPT.md 并照做"，就可以用中文制作你所在领域的版本。
 
 ![2つの見本: カメラワーク（左）とモーショングラフィックス（右）](assets/preview.gif)
 
