@@ -28,7 +28,7 @@ You are making a "24 names" set for the field given by the user: 24 names that p
 
 Work through the stages in order. **Stop where it says STOP** and wait for the user. Do not skip a stop because you feel confident.
 
-Before you start, read: `README.md`, `render.mjs`, `check.mjs`, `template/index.html`, and both `examples/*/NAMES.md`. Skim one example HTML (`examples/camera-moves/en/index.html`) to see how a finished card is drawn. **The default look is the look of `examples/camera-moves`** (see Stage 2). Use it unless the user asks for something else.
+Before you start, read: `README.md`, `render.mjs`, `check.mjs`, `template/index.html`, and both `examples/*/NAMES.md`. Skim one example HTML (`examples/camera-moves/en/index.html`) to see how a finished card is drawn. **The default look is `examples/camera-moves`** (see Stage 2): you match it by looking at the example itself, not by a description.
 
 **Language.** Make the set in the language the user writes to you in, which is usually their native language: names, group titles, descriptions, cheat sheet and post text. Only if you cannot tell (for example, the English request above was pasted unchanged), ask once before Stage 1 which language to make it in. Do not make an English version unless the user asks for it.
 
@@ -77,15 +77,21 @@ Ask the user to correct the list. Revise and show it again until they say OK.
 - Each card plays a 4.7-second cycle twice per video.
 - Under each card: number + name (about 36px, bold), second line below (about 22px). Heading at the top left: series title, page number (1/3), group title. Page dots at the bottom so viewers know there are three videos.
 
-**Default look:** the same feel as `examples/camera-moves`, unless the user asks for another look. A light background, white cards, flat pictograms in shades of gray with one or two accent colors, drawn with the 2D canvas. No realistic 3D, no photo-like shading, no realistic WebGL rendering unless the user asks for it.
+**Default look: `examples/camera-moves`.** Do not work from a description of it. Look at the example and match it:
 
-**The user may change the look** in this stage: other colors, line drawings, an interface mock-up, the colorful style of `examples/motion-graphics`. Offer it as a question ("Keep the default look, or change it?"); do not change it on your own.
+1. **See it.** Render stills of the example and look at them: `node render.mjs examples/camera-moves/ja/index.html --page 1 --sheet --cards --out-dir out/reference` (or open the HTML with `?t=2`).
+2. **Read it and copy the parts.** In that `index.html`, read the drawing code: the color list `C`, `person()`, and how the ground, buildings, trees, mountains and sky are drawn. Copy these parts into your file and use them (they draw in meters with y up, for a 3D camera; on a flat card, place them with `k.translate(x, groundY); k.scale(px, -px)`). Draw anything new the same way: flat fills, no outlines, blue and grays.
+3. **Compare.** When your cards are rendered, put them next to the example stills and fix any difference in colors, the shape of the people, the brightness of the background and the line widths.
+
+Changes in the subject (light, shadow, state) are shown with shades of blue, as in the example.
+
+**The user may change the look** in this stage: other colors, line drawings, an interface mock-up, the colorful style of `examples/motion-graphics`. Offer it as a question ("Keep the default look, or change it?"); do not change it on your own. If the user picks another example's look, follow the same three steps with that example.
 
 **Rules for the look** (they come from fixing real versions of this series):
 
 - **Keep everything that is not the subject simple.** Neutral background, plain props. Use color only on the subject the name is about. Color on the background or on the people made the subject hard to find.
-- **When the subject is the movement itself, color the moving thing.** A colored subject on a calm stage makes the motion easy to follow. Within the default look, use the accent colors for this; a fully colorful look like `examples/motion-graphics` is a change of look, so ask the user first.
-- **People are pictograms with a plain round head** by default: no eyes, mouth or hair. When a name needs the shape of a face (which way someone faces, where light falls on a face), add one minimal shape to the round head, such as a nose, and draw shadows and light as flat shapes (symbols). Do not draw a realistic face or a plaster bust: they look eerie.
+- **When the subject is the movement itself, color the moving thing.** A colored subject on a calm stage makes the motion easy to follow. Within the default look, use the blue for this; a fully colorful look like `examples/motion-graphics` is a change of look, so ask the user first.
+- **People are the example's pictograms** (`person()`): plain round head, no eyes, mouth or hair. When a name needs the shape of a face, add one minimal shape (such as a nose) and draw light and shadow as flat shapes. Never a realistic face or a plaster bust: they look eerie.
 - **Keep the tone friendly.** Nothing should look creepy or scary, unless the names themselves are for horror (for example, styles for horror videos).
 - **Show the real thing, not a diagram.** A simple drawing is fine, but it should show the actual object or scene from the field (a cup, a chart, a room, a product, a stage), not abstract dots and arrows explaining it. A dull, diagram-like card is a failed card even if it is correct.
 - **Look-alike pairs share the same scene, side by side,** so the only thing that changes is the difference itself.
@@ -127,7 +133,7 @@ This writes, for each page, the mp4, one contact sheet of the whole page (`-shee
 3. Could it be confused with its neighbor or another card?
 4. Does the key moment show up in the stills, and is the result held long enough to read?
 5. Text: cut off, overlapping, too small for a phone?
-6. Does it keep the look decided in Stage 2 (by default: flat 2D pictograms, no realistic 3D or photo-like shading)? Do people have plain round heads, and does anything look eerie or scary? Color on things that are not the subject?
+6. Put the card image next to the example stills (`out/reference`): does it look like the same series (colors, people, background, line widths)? Does anything look eerie or scary? Color on things that are not the subject?
 
 Then use the whole-page sheets for what only they show: the order of the cards, whether neighbors are easy to tell apart, and whether the key moments of the eight cards happen at different times.
 
