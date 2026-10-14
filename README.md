@@ -13,25 +13,25 @@ Give this repository to a coding AI (Claude Code, Codex, Cursor, and so on), tel
 
 ## Why I made this
 
-These videos got a lot of comments.
+Over the past few days, I've received all kinds of comments.
 
-I read through them, and one stopped me. Someone wrote, more or less, that what had been holding them back was never a lack of imagination. They just didn't know what that kind of movement was called.
+Among them, one from someone who had seen my posts caught my eye:
 
-I knew exactly what they meant. The picture is already in your head. What's missing isn't talent or imagination. It's the word you can hand to your AI.
+"What was holding me back wasn't a lack of imagination. It was not knowing what this kind of movement is called."
 
-Every field has its own vocabulary, its shared language. Camera work has one. So do motion graphics, cooking, lighting, and every craft I can think of. If professionals from all kinds of fields, in all kinds of languages, taught us the terms that matter most in their work, that would be incredibly useful.
+When I read that, I thought, strongly: "Yes, that's exactly it."
 
-So I'm sharing the prompt that makes these videos.
+The picture is already there in your head, and so is the sense of "I want it to move like this." What's missing isn't talent or imagination. I think it's a "shared language" for handing that image over to AI.
 
-Another comment said: "this is how you become a creative director".
+If experts in all kinds of fields, in all kinds of languages, laid out as a library the terms they'd want everyone to share, at a minimum, to really get the most out of AI, it would be enormously useful.
 
-Exactly.
+So I thought I'd start with myself, and put this together on GitHub for everyone.
 
-I believe that knowing the vocabulary of many different fields will let a lot more people bring out creative talent that has been sleeping in them.
+"this is how you become a creative director"
 
-So I hope this repository helps more people become teachers, explaining their own field in a way anyone can follow.
+I got that comment too, and I think it's exactly right. The ability to put the picture inside you into words, and hand it to people and to AI, is probably the very core of creative direction.
 
-And beyond that, it would be wonderful to see more creative directors around the world doing great work together with AI.
+If this repository is where it starts, and more and more creative directors around the world do wonderful work together with AI, nothing would make me happier.
 
 — Shohei Ohtaki ([@showheyohtaki](https://x.com/showheyohtaki))
 

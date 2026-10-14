@@ -13,25 +13,25 @@ Dale este repositorio a una IA de programación (Claude Code, Codex, Cursor, etc
 
 ## Por qué lo hice
 
-Estos videos recibieron muchísimos comentarios.
+Estos últimos días he recibido todo tipo de comentarios.
 
-Los fui leyendo uno a uno, y hubo uno que me hizo parar. Alguien decía, más o menos, que lo que le frenaba nunca había sido la falta de imaginación. Simplemente no sabía cómo se llamaba ese tipo de movimiento.
+Entre ellos, una persona que había visto mis publicaciones escribió algo que me llamó la atención:
 
-Sabía perfectamente a qué se refería. La imagen ya la tienes en la cabeza. Lo que falta no es talento ni imaginación. Es la palabra que le puedes dar a tu IA.
+"Lo que me frenaba no era la falta de imaginación, sino no saber cómo se llama este tipo de movimiento."
 
-Cada campo tiene su propio vocabulario, su lenguaje común. El trabajo de cámara lo tiene. Y también el motion graphics, la cocina, la iluminación y cualquier oficio que se me ocurra. Si profesionales de todo tipo de campos, en todo tipo de idiomas, nos enseñaran los términos más importantes de su trabajo, sería tremendamente útil.
+Cuando lo leí, pensé con fuerza: "Sí, es justo eso".
 
-Por eso comparto el prompt que hace estos videos.
+En tu cabeza ya tienes la imagen, e incluso la idea de "quiero que se mueva así". Lo que falta no es talento ni imaginación; creo que es un "lenguaje común" para pasarle esa imagen a la IA.
 
-Otro comentario decía: "this is how you become a creative director" ("así es como te conviertes en director creativo").
+Si expertos de todo tipo de campos, en todo tipo de idiomas, mostraran como una biblioteca los términos que, como mínimo, querrían que todos compartiéramos para sacarle de verdad partido a la IA, sería increíblemente útil.
 
-Exacto.
+Así que pensé: ¿por qué no empezar por mí mismo? Y reuní todo esto en GitHub para compartirlo.
 
-Creo que conocer el vocabulario de muchos campos distintos permitirá que mucha más gente saque el talento creativo que lleva dormido dentro.
+"this is how you become a creative director" ("así es como te conviertes en director creativo")
 
-Así que espero que este repositorio ayude a que más personas se conviertan en maestros, explicando su propio campo de forma que cualquiera pueda seguirlo.
+También recibí ese comentario, y creo que tiene toda la razón. La capacidad de poner en palabras la imagen que llevas dentro y pasársela a las personas y a la IA es, seguramente, el núcleo de la dirección creativa.
 
-Y, más allá de eso, sería maravilloso ver a más directores creativos por todo el mundo haciendo un gran trabajo junto con la IA.
+Si a partir de este repositorio surgen en todo el mundo cada vez más directores creativos que despliegan un gran talento junto con la IA, no podría estar más feliz.
 
 — Shohei Ohtaki ([@showheyohtaki](https://x.com/showheyohtaki))
 
